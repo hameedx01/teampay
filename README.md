@@ -10,7 +10,7 @@ TeamPay helps freelance teams agree on upfront costs and revenue shares, publish
 
 The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Source is publicly verified on [Sourcify](https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD), with exact creation and runtime matches. Arc Explorer also shows verified TeamPay source, confirmed by the builder’s screenshot; see [verification details](verification/README.md).
 
-The hosted payment workspace targets **Arc Mainnet (5042)** and uses the shared deployed contract. A real agreement/payment/withdrawal acceptance test remains outstanding; local integration tests have passed.
+The hosted payment workspace targets **Arc Mainnet (5042)** and uses the shared deployed contract. A real single-recipient agreement/payment/withdrawal acceptance test passed on mainnet: 0.01 USDC paid, 0.001 USDC expense repaid, 0.009 USDC revenue allocated, and the full 0.01 USDC withdrawn. See [transaction evidence](verification/mainnet-flow.json). Multiple-recipient and instalment behavior has been tested locally, not yet with a separate mainnet team.
 
 Arc Mainnet is chain **5042**, using native USDC with 18 decimals for gas and payments. Changing the network label alone does not constitute deployment. `dist/deployment.json` must contain a verified deployment on the selected chain.
 
@@ -50,7 +50,7 @@ Partial payments carry unpaid expenses forward. The final teammate receives smal
 
 ## Mainnet release work
 
-Deployment, source verification, and mainnet app configuration are complete. Complete a small real payment and withdrawal and record explorer links. The builder has a **1 USDC gas budget**; estimates must be refreshed before any signing. Payment principal is separate from gas.
+Deployment, source verification, and mainnet app configuration are complete. The first small real payment and withdrawal are complete with explorer hashes recorded. Remaining product work includes mobile/browser checks and feedback from a separate freelance team. The builder has a **1 USDC gas budget**; estimates must be refreshed before any signing. Payment principal is separate from gas.
 
 Read-only deployment estimate (no transaction is sent):
 
@@ -67,7 +67,7 @@ After confirmation, verify the creation receipt and runtime code without signing
 node configure-deployment.mjs <contract-address> <deployment-tx-hash> --mainnet
 ```
 
-This writes `dist/mainnet-deployment.json`. The active `dist/deployment.json` contains the same verified mainnet configuration. Real payment/withdrawal acceptance verification remains outstanding.
+This writes `dist/mainnet-deployment.json`. The active `dist/deployment.json` contains the same verified mainnet configuration. The first single-recipient mainnet payment and withdrawal have been verified.
 
 ## Inspiration and limitations
 

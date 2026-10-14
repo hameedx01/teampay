@@ -1,3 +1,4 @@
+import {receiptHTML} from './receipt.mjs';
 import {AccountConnection,NetworkConnection,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
 import {BrowserProvider,JsonRpcProvider,Interface} from './vendor/ethers.mjs';
 import {NETWORK,TeamPayClient,address,normalizePlan} from './chain.mjs';
@@ -182,7 +183,7 @@ function updatePayment(){
 }
 
 function renderHistory(){
- $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><button class="secondary" data-receipt="${p.hash}">Download receipt</button></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
+ $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><div class="receipt-actions"><button class="secondary" data-receipt="${p.hash}">View receipt</button><button class="text-action" data-receipt="${p.hash}" data-format="json" aria-label="Download receipt as JSON">JSON ↓</button></div></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
  $('history-scope').textContent=`Showing ${historyRows.length} payment transaction${historyRows.length===1?'':'s'} from blocks ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()}. ${historyCursor===null?'Searched back to the start of the chain.':'Earlier payments may exist.'}`;
  $('history-earlier').hidden=historyCursor===null;
 }
@@ -203,9 +204,12 @@ $('history-refresh').onclick=()=>run(()=>loadHistory(true));
 $('history-earlier').onclick=()=>run(()=>loadHistory(false));
 $('payment-history').onclick=event=>{const button=event.target.closest('[data-receipt]');if(!button)return;run(async()=>{
  const receipt=await client.paymentReceipt(contractAddress,selected.id,button.dataset.receipt);
+ if(button.dataset.format!=='json'){$('receipt-body').innerHTML=receiptHTML(receipt,selected.plan.title);$('receipt-dialog').showModal();return;}
  const blob=new Blob([JSON.stringify({...receipt,projectTitle:selected.plan.title},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
  link.href=url;link.download=`teampay-project-${selected.id}-${receipt.transactionHash.slice(2,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Confirmed payment receipt downloaded. It records allocations, not withdrawals.');
 });};
+$('receipt-close').onclick=()=>$('receipt-dialog').close();
+$('receipt-print').onclick=()=>window.print();
 $('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Mainnet.');});
 $('reset-wallet-request').onclick=()=>{if(accountConnection?.inFlight){message('Close or cancel the request in your wallet first.');return;}accountConnection?.resetAfterCancellation();updateConnectButton();message('You can now try Connect wallet again.');};
 $('switch-network').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Mainnet.');});
