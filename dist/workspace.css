@@ -23,3 +23,7 @@
 .activity-project{font-size:13px;white-space:nowrap;text-underline-offset:3px}#activity-status{font-size:13px;line-height:1.7;overflow-wrap:anywhere}#activity-list{margin-bottom:18px}#activity{scroll-margin-top:20px}#disconnect{padding:12px;font-size:12px}@media(max-width:600px){.wallet{display:grid;grid-template-columns:1fr auto}.wallet>span{grid-column:1/-1}.activity-project{white-space:normal}}
 
 .activity-filter{max-width:260px;margin:20px 0;font-size:13px}.activity-filter select{min-height:44px}#acceptance-note p{margin-bottom:0}
+
+.allocation .share-percentage{white-space:nowrap;flex-shrink:0}
+@media(max-width:420px){#receipt-body .allocation{flex-direction:column;gap:4px}#receipt-body .allocation strong{max-width:100%;text-align:left}#receipt-body .allocation>span{overflow-wrap:anywhere}}
+@media print{#receipt-body,#receipt-body *{font-family:Arial,sans-serif!important}#receipt-body .allocation{gap:24px}#receipt-body .allocation>span{overflow-wrap:anywhere}}

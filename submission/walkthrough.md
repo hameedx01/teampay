@@ -9,7 +9,7 @@
 “Ada paid 60 USDC upfront. From a 300 USDC payment, that expense is repaid first. The remaining 240 follows the agreed team shares.”
 
 **15–24 seconds — completed mainnet receipt**
-“This smaller payment actually ran on Arc Mainnet. The receipt is read from confirmed transaction events, and the withdrawal is visible on the explorer.”
+“This real Arc payment split USDC between two wallets. The expense was repaid first, and both teammates have withdrawn their earnings.”
 
 **24–30 seconds — agreement builder**
 “Create the agreement, share a payment link, and let each teammate collect their share. The source and deployed contract are public.”
@@ -23,13 +23,13 @@ Record existing evidence; do not send a new payment merely for a recording. The 
 3. Completed mainnet project showing the paid expense and payment history.
 4. Readable receipt and the explorer’s verified contract.
 
-Capture the application area only. Exclude wallet extensions, account balances unrelated to the example, personal browser tabs, bookmarks, and notifications. No screenshots or recording are claimed to be complete yet.
+Capture the application area only. Exclude wallet extensions, account balances unrelated to the example, personal browser tabs, bookmarks, and notifications. Browser screenshots and receipt PDFs are saved in `verification/browser/`. A narrated recording is still outstanding.
 
 ## Manual browser checks still needed
 
-- 320/375/390px phone widths: no horizontal scrolling; readable labels and amounts; usable buttons.
+- Browser layout checks passed at 320/375/390px and 1440px for the landing page, builder, and standalone receipt. Screenshots were inspected. A physical-device wallet check is still needed.
 - Wallet browser: connect, wrong-network recovery, and cancellation. Standard mobile browsers without an injected wallet should give clear instructions.
-- Receipt: open from the landing-page evidence link without connecting a wallet, print/save as PDF, confirm full addresses and totals are visible, then close and resume the project.
+- The live project receipt opens without a wallet at 390px. The standalone receipt PDF was generated and visually checked on one page with full addresses and totals. Workspace dialog print checks are recorded in `verification/browser/README.md`.
 - Wallet changes during a transaction review must require a fresh review.
 - A second person opens a shared project link and explains what payment does before using it.
 
@@ -57,7 +57,7 @@ Open https://product-ruby-chi.vercel.app/workspace?network=5042&contract=0xB8A30
 
 ## Public receipt for review
 
-https://product-ruby-chi.vercel.app/proof/team-payment is a standalone receipt generated from the confirmed project 2 payment of 0.0025 USDC. It opens without a wallet or live RPC request and includes full recipient addresses, amounts, transaction hash, and an explorer link. Use the browser Print command to save it as PDF. Its responsive and print styles have been inspected in source; actual mobile rendering and PDF pagination remain unverified.
+https://product-ruby-chi.vercel.app/proof/team-payment is a standalone receipt generated from the confirmed project 2 payment of 0.0025 USDC. It opens without a wallet or live RPC request and includes full recipient addresses, amounts, transaction hash, and an explorer link. Use the browser Print command to save it as PDF. Its responsive rendering was checked in Chrome at 320, 375, 390, and 1440 pixels. The generated PDF is one page and its amounts and full recipient addresses were checked. This does not validate physical mobile wallet behavior.
 
 ## Submission availability
 

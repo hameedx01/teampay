@@ -1,0 +1,86 @@
+[
+  {
+    "name": "landing",
+    "width": 320,
+    "viewport": 320,
+    "scrollWidth": 320,
+    "overflow": []
+  },
+  {
+    "name": "workspace",
+    "width": 320,
+    "viewport": 320,
+    "scrollWidth": 320,
+    "overflow": []
+  },
+  {
+    "name": "receipt",
+    "width": 320,
+    "viewport": 320,
+    "scrollWidth": 320,
+    "overflow": []
+  },
+  {
+    "name": "landing",
+    "width": 375,
+    "viewport": 375,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "name": "workspace",
+    "width": 375,
+    "viewport": 375,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "name": "receipt",
+    "width": 375,
+    "viewport": 375,
+    "scrollWidth": 375,
+    "overflow": []
+  },
+  {
+    "name": "landing",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": []
+  },
+  {
+    "name": "workspace",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": []
+  },
+  {
+    "name": "receipt",
+    "width": 390,
+    "viewport": 390,
+    "scrollWidth": 390,
+    "overflow": []
+  },
+  {
+    "name": "landing",
+    "width": 1440,
+    "viewport": 1440,
+    "scrollWidth": 1425,
+    "overflow": []
+  },
+  {
+    "name": "workspace",
+    "width": 1440,
+    "viewport": 1440,
+    "scrollWidth": 1425,
+    "overflow": []
+  },
+  {
+    "name": "receipt",
+    "width": 1440,
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "overflow": []
+  }
+]
