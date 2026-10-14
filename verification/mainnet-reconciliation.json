@@ -1,0 +1,305 @@
+{
+  "checkedAt": "2026-10-14T23:30:09.974Z",
+  "chainId": 5042,
+  "contract": "0xB8A30476424DF1b2954e9a934a66fC52463C62cD",
+  "fromBlock": 25990879,
+  "toBlock": 26000468,
+  "projects": [
+    {
+      "id": 1,
+      "title": "Website design",
+      "receivedUsdc": "0.01",
+      "remainingExpensesUsdc": [
+        "0.0"
+      ],
+      "payments": [
+        {
+          "type": "Funded",
+          "hash": "0x90e25ec0c7875a18f9feb010e6132a723640dd39469f8c70dca3bbdaf9e1b586",
+          "block": 25993773,
+          "projectId": "1",
+          "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "10000000000000000",
+          "amountUsdc": "0.01"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "TeamPay two-wallet acceptance test",
+      "receivedUsdc": "0.006",
+      "remainingExpensesUsdc": [
+        "0.0"
+      ],
+      "payments": [
+        {
+          "type": "Funded",
+          "hash": "0xf992316473b1fc2be2fed771fcd5f58c83e0a45d38acf33d3115503490ffc697",
+          "block": 25997888,
+          "projectId": "2",
+          "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "500000000000000",
+          "amountUsdc": "0.0005"
+        },
+        {
+          "type": "Funded",
+          "hash": "0xf040aeea65b8ae3a271e6a87e27f8732f09c149d45b4286825eaa489abf23ed7",
+          "block": 25997909,
+          "projectId": "2",
+          "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "500000000000000",
+          "amountUsdc": "0.0005"
+        },
+        {
+          "type": "Funded",
+          "hash": "0x5cd46c7a943e115601703057fe6c5eb00f2eb12fe55c4a70b0b1d6c5fc21c19e",
+          "block": 25998043,
+          "projectId": "2",
+          "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "2500000000000000",
+          "amountUsdc": "0.0025"
+        },
+        {
+          "type": "Funded",
+          "hash": "0x31f86d1bc1f652017ce5adf3067f364a9ef54f8301373f7d94a8428469a930ff",
+          "block": 25998063,
+          "projectId": "2",
+          "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "2500000000000000",
+          "amountUsdc": "0.0025"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "TeamPay two-wallet acceptance test",
+      "receivedUsdc": "0.0",
+      "remainingExpensesUsdc": [
+        "0.001"
+      ],
+      "payments": []
+    }
+  ],
+  "wallets": [
+    {
+      "account": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "allocatedUsdc": "0.0135",
+      "withdrawnUsdc": "0.0135",
+      "availableUsdc": "0.0",
+      "withdrawals": [
+        {
+          "type": "Claimed",
+          "hash": "0x0e16a6b63d75049fbefd06b19c426608b451b351b53a3d7dc7a80dc93efd5a46",
+          "block": 25993838,
+          "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "10000000000000000",
+          "amountUsdc": "0.01"
+        },
+        {
+          "type": "Claimed",
+          "hash": "0x3a8d5eeb7e1c0e17e058a492e421e0c2dcb9b8a4c00dc31484546a5ca9fe23b9",
+          "block": 25998796,
+          "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+          "amount": "3500000000000000",
+          "amountUsdc": "0.0035"
+        }
+      ]
+    },
+    {
+      "account": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+      "allocatedUsdc": "0.0025",
+      "withdrawnUsdc": "0.0025",
+      "availableUsdc": "0.0",
+      "withdrawals": [
+        {
+          "type": "Claimed",
+          "hash": "0x69b07b2b1eae5d85ba7b139c9abf9a08308e53878f683c9d320bd5fe697537bc",
+          "block": 25998929,
+          "recipient": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+          "amount": "2500000000000000",
+          "amountUsdc": "0.0025"
+        }
+      ]
+    }
+  ],
+  "contractTransactionGasUsdc": "0.062536803408518968",
+  "events": [
+    {
+      "type": "Created",
+      "hash": "0x970b4f56c4cc5596295f8fb84f0037c9a63cf79db015bc7ef78e58ffd52db050",
+      "block": 25993658,
+      "projectId": "1"
+    },
+    {
+      "type": "ProjectPublished",
+      "hash": "0x970b4f56c4cc5596295f8fb84f0037c9a63cf79db015bc7ef78e58ffd52db050",
+      "block": 25993658,
+      "projectId": "1"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x90e25ec0c7875a18f9feb010e6132a723640dd39469f8c70dca3bbdaf9e1b586",
+      "block": 25993773,
+      "projectId": "1",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "1000000000000000",
+      "amountUsdc": "0.001"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x90e25ec0c7875a18f9feb010e6132a723640dd39469f8c70dca3bbdaf9e1b586",
+      "block": 25993773,
+      "projectId": "1",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "9000000000000000",
+      "amountUsdc": "0.009"
+    },
+    {
+      "type": "Funded",
+      "hash": "0x90e25ec0c7875a18f9feb010e6132a723640dd39469f8c70dca3bbdaf9e1b586",
+      "block": 25993773,
+      "projectId": "1",
+      "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "10000000000000000",
+      "amountUsdc": "0.01"
+    },
+    {
+      "type": "Claimed",
+      "hash": "0x0e16a6b63d75049fbefd06b19c426608b451b351b53a3d7dc7a80dc93efd5a46",
+      "block": 25993838,
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "10000000000000000",
+      "amountUsdc": "0.01"
+    },
+    {
+      "type": "Created",
+      "hash": "0xa391f24a908519fc23e248edf6282281f664ceabdaf457888f783a8c37e43b38",
+      "block": 25997509,
+      "projectId": "2"
+    },
+    {
+      "type": "ProjectPublished",
+      "hash": "0xa391f24a908519fc23e248edf6282281f664ceabdaf457888f783a8c37e43b38",
+      "block": 25997509,
+      "projectId": "2"
+    },
+    {
+      "type": "Created",
+      "hash": "0xa5de30dbb967288df015e0c8391d86f99b18e10d9f79028da8f26306efa46cae",
+      "block": 25997532,
+      "projectId": "3"
+    },
+    {
+      "type": "ProjectPublished",
+      "hash": "0xa5de30dbb967288df015e0c8391d86f99b18e10d9f79028da8f26306efa46cae",
+      "block": 25997532,
+      "projectId": "3"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0xf992316473b1fc2be2fed771fcd5f58c83e0a45d38acf33d3115503490ffc697",
+      "block": 25997888,
+      "projectId": "2",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "500000000000000",
+      "amountUsdc": "0.0005"
+    },
+    {
+      "type": "Funded",
+      "hash": "0xf992316473b1fc2be2fed771fcd5f58c83e0a45d38acf33d3115503490ffc697",
+      "block": 25997888,
+      "projectId": "2",
+      "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "500000000000000",
+      "amountUsdc": "0.0005"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0xf040aeea65b8ae3a271e6a87e27f8732f09c149d45b4286825eaa489abf23ed7",
+      "block": 25997909,
+      "projectId": "2",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "500000000000000",
+      "amountUsdc": "0.0005"
+    },
+    {
+      "type": "Funded",
+      "hash": "0xf040aeea65b8ae3a271e6a87e27f8732f09c149d45b4286825eaa489abf23ed7",
+      "block": 25997909,
+      "projectId": "2",
+      "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "500000000000000",
+      "amountUsdc": "0.0005"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x5cd46c7a943e115601703057fe6c5eb00f2eb12fe55c4a70b0b1d6c5fc21c19e",
+      "block": 25998043,
+      "projectId": "2",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x5cd46c7a943e115601703057fe6c5eb00f2eb12fe55c4a70b0b1d6c5fc21c19e",
+      "block": 25998043,
+      "projectId": "2",
+      "recipient": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    },
+    {
+      "type": "Funded",
+      "hash": "0x5cd46c7a943e115601703057fe6c5eb00f2eb12fe55c4a70b0b1d6c5fc21c19e",
+      "block": 25998043,
+      "projectId": "2",
+      "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "2500000000000000",
+      "amountUsdc": "0.0025"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x31f86d1bc1f652017ce5adf3067f364a9ef54f8301373f7d94a8428469a930ff",
+      "block": 25998063,
+      "projectId": "2",
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    },
+    {
+      "type": "Allocated",
+      "hash": "0x31f86d1bc1f652017ce5adf3067f364a9ef54f8301373f7d94a8428469a930ff",
+      "block": 25998063,
+      "projectId": "2",
+      "recipient": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    },
+    {
+      "type": "Funded",
+      "hash": "0x31f86d1bc1f652017ce5adf3067f364a9ef54f8301373f7d94a8428469a930ff",
+      "block": 25998063,
+      "projectId": "2",
+      "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "2500000000000000",
+      "amountUsdc": "0.0025"
+    },
+    {
+      "type": "Claimed",
+      "hash": "0x3a8d5eeb7e1c0e17e058a492e421e0c2dcb9b8a4c00dc31484546a5ca9fe23b9",
+      "block": 25998796,
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "3500000000000000",
+      "amountUsdc": "0.0035"
+    },
+    {
+      "type": "Claimed",
+      "hash": "0x69b07b2b1eae5d85ba7b139c9abf9a08308e53878f683c9d320bd5fe697537bc",
+      "block": 25998929,
+      "recipient": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+      "amount": "2500000000000000",
+      "amountUsdc": "0.0025"
+    }
+  ]
+}

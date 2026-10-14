@@ -14,7 +14,7 @@
 **24–30 seconds — agreement builder**
 “Create the agreement, share a payment link, and let each teammate collect their share. The source and deployed contract are public.”
 
-Record existing evidence; do not send a new payment merely for a recording. The example is simulated and the real acceptance test used a single builder wallet. Keep those distinct in narration.
+Record existing evidence; do not send a new payment merely for a recording. The example is simulated and the real acceptance tests used builder-controlled wallets. Keep those distinct in narration.
 
 ## Screenshots to capture
 
@@ -35,9 +35,9 @@ Capture the application area only. Exclude wallet extensions, account balances u
 
 ## Two-wallet acceptance test
 
-This is still pending. Use a second wallet controlled by the builder or a willing teammate; do not use an invented recipient address. Review current fees before every signature and remain inside the original 1 USDC gas budget. Never share wallet secrets.
+Completed on project 2. Four confirmed payments totaled 0.006 USDC. The contract repaid 0.001 USDC to HameedX, then split the remaining 0.005 USDC equally. HameedX withdrew 0.0035 USDC; the second wallet withdrew 0.0025 USDC. Both available balances are zero at the reconciliation block. See `verification/mainnet-reconciliation.json` for every event and withdrawal hash.
 
-Create a project with two known recipients, a small expense for the first, and explicit shares totaling 100%. Preview a partial payment and confirm unpaid expenses carry forward. Preview a second payment that clears the expense and splits the remainder. Confirm each recipient’s credit and withdrawal destination. Record transaction hashes, actual gas, and any UX confusion. This test requires wallet approvals; no additional funds have been sent by the assistant.
+The original planned sequence was submitted twice. This exposed confusing post-payment UI, since fixed by clearing the amount and displaying a completion message. An additional agreement (project 3) is unfunded. Do not send more payments or publish another agreement for the walkthrough.
 
 ## Five-minute usability conversation
 
@@ -51,15 +51,6 @@ Show someone the landing page without explaining it. Ask:
 
 Record their actual wording. Do not invent interviews, testimonials, or usage metrics.
 
-## Prepared two-wallet draft
+## Recording the completed test
 
-Open https://product-ruby-chi.vercel.app/workspace?acceptance=two-wallet to load the editable draft. It does not connect, publish, or send funds automatically.
-
-- HameedX: `0x940D6F7F596Aa65342fE490510b74282156C949B`, 50%.
-- Second teammate: `0xef4D5945A4F48943b74af0957d61638CF645Ad2b`, 50%.
-- Expense: 0.001 USDC to HameedX.
-- First payment: 0.0005 USDC; expected unpaid expense 0.0005 USDC, no revenue allocation yet.
-- Second payment: 0.0025 USDC; expected final allocated totals 0.002 USDC to HameedX and 0.001 USDC to the second wallet.
-- Each wallet withdraws its own balance. The second wallet currently has no mainnet USDC for gas; fund it before testing its direct withdrawal.
-
-Do not publish the draft twice. After publishing, use the resulting project link for both payments. These actions still require explicit wallet signatures. Visual browser checks remain outstanding.
+Open https://product-ruby-chi.vercel.app/workspace?network=5042&contract=0xB8A30476424DF1b2954e9a934a66fC52463C62cD&project=2 . Show the 0.006 USDC received, zero expenses remaining, two 50% shares, and confirmed payment receipts. Use the withdrawal explorer links in the reconciliation evidence to demonstrate each recipient collected their funds. No further signatures are needed.

@@ -44,11 +44,18 @@ TeamPay uses Arc for immutable payment agreements, native-USDC payment allocatio
 
 The first mainnet acceptance test used the builder’s own wallet as payer and sole recipient. It paid 0.01 USDC, repaid a 0.001 USDC expense, allocated 0.009 USDC as revenue, and withdrew the full 0.01 USDC. Deployment plus agreement, payment, and withdrawal consumed 0.035129921828512336 USDC in gas. This is a real mainnet test, not evidence of customer traction.
 
+The subsequent builder-controlled two-wallet test (project 2) received four payments: 0.0005, 0.0005, 0.0025, and 0.0025 USDC, totaling 0.006 USDC. It repaid the 0.001 USDC expense, then divided the remaining 0.005 USDC equally. The primary recipient withdrew 0.0035 USDC and the second recipient withdrew 0.0025 USDC. Both claimable balances are zero at the recorded reconciliation block. Project 3 is an additional published but unfunded agreement; it is not another completed test or customer.
+
+- Two-wallet project: https://product-ruby-chi.vercel.app/workspace?network=5042&contract=0xB8A30476424DF1b2954e9a934a66fC52463C62cD&project=2
+- Primary withdrawal: https://explorer.arc.io/tx/0x3a8d5eeb7e1c0e17e058a492e421e0c2dcb9b8a4c00dc31484546a5ca9fe23b9
+- Second withdrawal: https://explorer.arc.io/tx/0x69b07b2b1eae5d85ba7b139c9abf9a08308e53878f683c9d320bd5fe697537bc
+- Full reconciliation: `verification/mainnet-reconciliation.json`. Deployment plus all recorded contract transactions cost 0.062536803408518968 USDC in gas, excluding wallet-to-wallet funding transfers. These are builder tests, not customer traction.
+
 ## Technical credibility and limits
 
-The repository includes 44 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
+The repository includes 46 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
 
-Solidity source is verified on Sourcify with exact creation/runtime matches, and Arc Explorer displays verified source. Verification is not an audit. No independent audit or customer traction is claimed. Multiple-recipient mainnet validation, real-team feedback, mobile visual QA, and receipt print-preview QA remain outstanding. Mobile wallet pairing is not implemented; an injected browser wallet is required.
+Solidity source is verified on Sourcify with exact creation/runtime matches, and Arc Explorer displays verified source. Verification is not an audit. No independent audit or customer traction is claimed. The two-recipient mainnet payment and withdrawal flow is complete. Real-team feedback, mobile visual QA, and receipt print-preview QA remain outstanding. Mobile wallet pairing is not implemented; an injected browser wallet is required.
 
 ## Inspiration
 

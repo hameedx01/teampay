@@ -75,7 +75,7 @@ After confirmation, verify the creation receipt and runtime code without signing
 node configure-deployment.mjs <contract-address> <deployment-tx-hash> --mainnet
 ```
 
-This writes `dist/mainnet-deployment.json`. The active `dist/deployment.json` contains the same verified mainnet configuration. The first single-recipient mainnet payment and withdrawal have been verified.
+This writes `dist/mainnet-deployment.json`. The active `dist/deployment.json` contains the same verified mainnet configuration. The single-recipient and two-recipient mainnet payments and withdrawals have been verified. Full event reconciliation is in `verification/mainnet-reconciliation.json`; run `node verification/reconcile-mainnet.mjs` to refresh this read-only evidence.
 
 ## Inspiration and limitations
 
