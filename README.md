@@ -41,6 +41,12 @@ No npm install is required. Ethers 6.17.0 is vendored with its license. Solidity
 
 Partial payments carry unpaid expenses forward. The final teammate receives smallest-unit rounding dust. Names do not imply teammate approval. Metadata is public. Receipts document payments and allocations, not withdrawals.
 
+## Wallet and activity
+
+Use **Disconnect** in the workspace header to disconnect from TeamPay. This choice persists on this browser until an explicit reconnection. It does not revoke extension permissions or cancel transactions already submitted.
+
+**Your activity** reads confirmed events for the connected wallet from the shared contract: agreements published, payments sent, allocations received, and withdrawals. History starts at deployment and scans 5,000-block pages. Use **Load more activity** until the status reaches the current block. Changing accounts or disconnecting clears the previous wallet’s history from view. Withdrawals are wallet-wide, not tied to a single project.
+
 ## Repository
 
 - `dist/`: landing page, wallet-free example, wallet workspace, and browser contract client.

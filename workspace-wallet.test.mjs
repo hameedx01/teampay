@@ -9,7 +9,7 @@ function fixture(){
  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  let accounts=['0x1234567890'],chain='0x1';
  const provider={request:async({method})=>method==='eth_accounts'?accounts:chain};
- const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK,short:s=>s,accountConnection:null,wallet:null,selected:null,contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
+ const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK,short:s=>s,accountConnection:null,wallet:null,selected:null,busy:false,disconnected:false,resetActivity(){},refreshActivity:async()=>{},contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
  vm.runInContext(source.slice(source.indexOf('let networkConnection='),source.indexOf('const KEY=')),context);
  return {$,context,sync:()=>vm.runInContext('syncWallet()',context),chain:v=>chain=v,accounts:v=>accounts=v};
 }
@@ -47,4 +47,12 @@ test('direct receipt view uses verified payment data without asking for a wallet
  vm.runInContext(source.slice(source.indexOf('async function openReceipt('),source.indexOf("$('payment-history').onclick=")),context);
  await vm.runInContext(`openReceipt('${evidence.transactions.payment}')`,context);
  assert.equal(calls,1);assert.equal(opened,1);assert.match(elements['receipt-body'].innerHTML,/0.01 USDC/);
+});
+
+test('intentional disconnect clears wallet state and blocks passive reconnection',async()=>{
+ const f=fixture();f.chain(NETWORK.chainId);await f.sync();
+ const saved=new Map();Object.assign(f.context,{store:{set:(key,value)=>saved.set(key,value)},DISCONNECT_KEY:'disconnect',resetActivity(){},message(){}});
+ vm.runInContext(source.slice(source.indexOf("$('disconnect').onclick="),source.indexOf("$('check-wallet').onclick=")),f.context);
+ f.$('disconnect').onclick();assert.equal(saved.get('disconnect'),'true');assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');assert.equal(f.$('disconnect').hidden,true);
+ await f.sync();assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');
 });

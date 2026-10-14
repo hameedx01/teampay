@@ -1,3 +1,4 @@
+import {loadWalletActivity} from './activity.mjs';
 import {receiptHTML} from './receipt.mjs';
 import {AccountConnection,NetworkConnection,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
 import {BrowserProvider,JsonRpcProvider,Interface} from './vendor/ethers.mjs';
@@ -7,6 +8,9 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const short=s=>`${s.slice(0,6)}…${s.slice(-4)}`;
 const store={get(key){try{return localStorage.getItem(key);}catch{return null;}},set(key,value){try{localStorage.setItem(key,value);}catch{}},remove(key){try{localStorage.removeItem(key);}catch{}}};
+const DISCONNECT_KEY='teampay.wallet.disconnected.v1';
+let disconnected=store.get(DISCONNECT_KEY)==='true';
+let activityVersion=0,activityRows=[],activityNext=null,activityEnd=null,activityAccount=null,activityBusy=false,sharedConfig=null;
 let accountConnection=null;
 function connectionSession(){if(!window.ethereum?.request)throw new Error('Open this page in a wallet-enabled browser or install an EVM wallet extension.');if(!accountConnection||accountConnection.provider!==window.ethereum)accountConnection=new AccountConnection(window.ethereum);return accountConnection;}
 let networkConnection=null,connecting=false,walletVersion=0,walletState={account:null,wrongNetwork:false};
@@ -14,7 +18,9 @@ function updateConnectButton(){
  const waiting=Boolean(accountConnection?.inFlight),switching=Boolean(networkConnection?.inFlight);
  $('connect').disabled=connecting||waiting||Boolean(accountConnection?.pending)||Boolean(wallet);
  $('connect').textContent=switching?'Switch in wallet…':waiting?'Open your wallet…':walletState.wrongNetwork?'Switch network':wallet?'Connected':'Connect wallet';
- $('wallet-help').hidden=!waiting&&!accountConnection?.pending;
+ $('wallet-help').hidden=disconnected||(!waiting&&!accountConnection?.pending);
+ $('disconnect').hidden=!walletState.account;
+ $('disconnect').disabled=connecting||busy;
  $('network-help').hidden=!walletState.wrongNetwork;
  $('switch-network').disabled=connecting||switching;
  $('switch-network').textContent=switching?'Approve in your wallet…':'Switch to Arc Mainnet';
@@ -23,12 +29,13 @@ function updateConnectButton(){
  else{$('deploy').disabled=false;$('publish').disabled=!contractAddress;if(selected)updatePayment();}
 }
 async function syncWallet(){
- if(!window.ethereum?.request)return;
+ if(disconnected||!window.ethereum?.request)return;
+ const previousAccount=walletState.account;
  const version=++walletVersion;wallet=null;$('withdraw').disabled=true;$('withdrawable').textContent='Checking wallet…';
  const state=await walletSnapshot(window.ethereum,NETWORK.chainId);if(version!==walletVersion)return;
- walletState=state;if(state.wrongNetwork)$('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(state.chainId))+'). Switch to Arc Mainnet before publishing or making a payment.';updateConnectButton();
+ walletState=state;if(previousAccount?.toLowerCase()!==state.account?.toLowerCase())resetActivity();if(state.wrongNetwork)$('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(state.chainId))+'). Switch to Arc Mainnet before publishing or making a payment.';updateConnectButton();
  if(state.account&&!state.wrongNetwork){const provider=new BrowserProvider(window.ethereum);const signer=await provider.getSigner(state.account);if(version!==walletVersion)return;wallet={provider,signer,account:state.account};}
- if(version!==walletVersion)return;updateConnectButton();if(selected)await refreshWithdrawal();
+ if(version!==walletVersion)return;updateConnectButton();if(selected)await refreshWithdrawal();if(!$('activity').hidden)void refreshActivity();
 }
 const KEY='teampay.arc-mainnet.pending.v1',CONTRACT_KEY='teampay.arc-mainnet.contract.v1';
 let client,reader,artifact,wallet=null,busy=false,selected=null,draft=null,contractAddress='',memberCount=0,historyRows=[],historyCursor=null,historyStart=null,historyEnd=null,historyVersion=0;
@@ -37,7 +44,7 @@ $('contract-setup').hidden=!setupMode;
 let pending;try{pending=JSON.parse(store.get(KEY)||'null');}catch{pending=null;}
 const message=(text,error=false)=>{$('status').textContent=text;$('status').classList.toggle('error',error);for(const el of document.querySelectorAll('.dialog-status')){el.textContent=error?text:'';}};
 function explain(error){if(Number(walletErrorCode(error))===-32002)return PENDING_MESSAGE;if(Number(walletErrorCode(error))===4001||error.code==='ACTION_REJECTED')return 'Request cancelled in your wallet. No new transaction was submitted.';return error.shortMessage||error.message||'The request failed. Please try again.';}
-async function run(fn){if(busy)return;busy=true;document.body.setAttribute('aria-busy','true');try{if(!client)throw new Error('Payment tools are still loading.');await fn();}catch(error){message(explain(error),true);}finally{busy=false;document.body.removeAttribute('aria-busy');}}
+async function run(fn){if(busy)return;busy=true;document.body.setAttribute('aria-busy','true');updateConnectButton();try{if(!client)throw new Error('Payment tools are still loading.');await fn();}catch(error){message(explain(error),true);}finally{busy=false;document.body.removeAttribute('aria-busy');updateConnectButton();}}
 function appendMember(focus=true){
  if($('members').children.length>=10)return;
  const row=document.createElement('div');row.className='member-row';row.dataset.member=String(memberCount++);
@@ -93,7 +100,7 @@ function agreementHTML(plan,remaining=plan.expenses.map(e=>units(e.amount))){
  return `<h3>Expenses, in repayment order</h3>${plan.expenses.length?plan.expenses.map((e,i)=>`<div class="allocation"><span>${i+1}. ${esc(e.name)}<small>To ${esc(plan.members[e.member].name)} · Original amount ${display(units(e.amount))} USDC</small></span><strong>${display(remaining[i])} USDC left</strong></div>`).join(''):'<p class="fine">No expenses. Payments go directly to team shares.</p>'}<h3>Shares of the remainder</h3>${plan.members.map(m=>`<div class="allocation"><span>${esc(m.name)}<small>${esc(m.address)}</small></span><strong>${m.bps/100}%</strong></div>`).join('')}<p class="fine">Any smallest-unit rounding remainder goes to the final teammate.</p>`;
 }
 async function connect(){
- connecting=true;
+ disconnected=false;store.remove(DISCONNECT_KEY);connecting=true;
  try{
   const request=connectionSession().connect();updateConnectButton();message('Approve the connection in your wallet. Connecting does not move funds.');await request;
   await syncWallet();
@@ -109,7 +116,7 @@ async function connect(){
    }
    await syncWallet();
   }
-  if(!wallet)throw new Error('Wallet connection changed. Please connect again.');return wallet;
+  if(!wallet)throw new Error('Wallet connection changed. Please connect again.');if(!$('activity').hidden)void refreshActivity();return wallet;
  }finally{connecting=false;updateConnectButton();}
 }
 async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;$('availability').textContent='Mainnet payments are configured. Review your agreement before publishing.';$('publish').disabled=walletState.wrongNetwork;return contractAddress;}
@@ -213,6 +220,42 @@ async function openReceipt(hash,format='view'){
 $('payment-history').onclick=event=>{const button=event.target.closest('[data-receipt]');if(button)run(()=>openReceipt(button.dataset.receipt,button.dataset.format));};
 $('receipt-close').onclick=()=>$('receipt-dialog').close();
 $('receipt-print').onclick=()=>window.print();
+function resetActivity(){
+ activityVersion++;activityRows=[];activityNext=null;activityEnd=null;activityAccount=null;activityBusy=false;
+ $('activity-list').innerHTML='';$('activity-status').textContent='Connect your wallet to load your activity.';$('activity-more').hidden=true;$('activity-refresh').disabled=false;
+}
+function renderActivity(){
+ const labels={agreement:'Agreement published',payment:'Payment sent',allocation:'Funds allocated to you',withdrawal:'Withdrawal to your wallet'};
+ $('activity-list').innerHTML=activityRows.map(item=>{const link=new URL(location.origin+location.pathname);link.searchParams.set('network','5042');link.searchParams.set('contract',sharedConfig.contract);if(item.projectId)link.searchParams.set('project',item.projectId);if(item.type==='payment'||item.type==='allocation')link.searchParams.set('receipt',item.transactionHash);
+ return `<article class="payment-entry"><div><strong>${labels[item.type]}${item.type==='agreement'?'':' · '+display(item.amount)+' USDC'}</strong><small>Block ${item.blockNumber.toLocaleString()}${item.projectId?' · Project #'+esc(item.projectId):' · Combined wallet balance'}</small><a href="${txLink(item.transactionHash)}" target="_blank" rel="noopener noreferrer">View transaction ↗</a></div>${item.projectId?`<a class="activity-project" href="${esc(link.href)}">${item.type==='agreement'?'Open agreement':'View receipt'} ↗</a>`:''}</article>`;}).join('');
+}
+async function refreshActivity(more=false){
+ if(activityBusy)return;
+ const account=walletState.account;
+ if(disconnected||!account){resetActivity();return;}
+ if(!sharedConfig?.contract||!reader||!artifact){$('activity-status').textContent='Activity tools are still loading. Try Refresh activity.';return;}
+ if(activityAccount?.toLowerCase()!==account.toLowerCase()){resetActivity();activityAccount=account;}
+ const version=activityVersion;activityBusy=true;$('activity-refresh').disabled=true;$('activity-more').disabled=true;
+ $('activity-status').textContent='Reading confirmed activity from Arc Mainnet…';
+ try{
+  const fromBlock=more&&activityNext!==null?activityNext:activityEnd!==null?activityEnd+1:sharedConfig.deploymentBlock;
+  const page=await loadWalletActivity(reader,artifact,sharedConfig.contract,account,{fromBlock});
+  if(version!==activityVersion||disconnected||walletState.account?.toLowerCase()!==account.toLowerCase())return;
+  activityEnd=Math.max(activityEnd??0,page.toBlock);activityNext=page.nextBlock;
+  activityRows=[...new Map([...activityRows,...page.entries].map(item=>[item.key,item])).values()].sort((a,b)=>b.blockNumber-a.blockNumber||b.logIndex-a.logIndex);renderActivity();
+  $('activity-status').textContent=`${activityRows.length} activity record${activityRows.length===1?'':'s'} for ${short(account)}. Checked blocks ${sharedConfig.deploymentBlock.toLocaleString()}–${activityEnd.toLocaleString()}. ${activityNext!==null?'More blocks remain. Use Load more activity to continue.':activityRows.length?'Up to date at this block.':'No activity found for this wallet.'}`;
+  $('activity-more').hidden=activityNext===null;
+ }catch(error){if(version===activityVersion)$('activity-status').textContent='Could not load activity. '+explain(error)+' Try Refresh activity.';}
+ finally{if(version===activityVersion){activityBusy=false;$('activity-refresh').disabled=false;$('activity-more').disabled=false;}}
+}
+$('show-activity').onclick=()=>{$('activity').hidden=false;void refreshActivity();};
+$('activity-refresh').onclick=()=>void refreshActivity();$('activity-more').onclick=()=>void refreshActivity(true);
+$('disconnect').onclick=()=>{
+ if(busy||connecting)return;
+ disconnected=true;store.set(DISCONNECT_KEY,'true');walletVersion++;wallet=null;walletState={account:null,wrongNetwork:false};accountConnection=null;networkConnection=null;resetActivity();
+ $('withdraw').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';$('confirm-send').disabled=true;updateConnectButton();
+ message('Disconnected from TeamPay. Reconnect when you want to use your wallet. Extension permissions can be removed separately in your wallet.');
+};
 $('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Mainnet.');});
 $('reset-wallet-request').onclick=()=>{if(accountConnection?.inFlight){message('Close or cancel the request in your wallet first.');return;}accountConnection?.resetAfterCancellation();updateConnectButton();message('You can now try Connect wallet again.');};
 $('switch-network').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Mainnet.');});
@@ -233,17 +276,18 @@ $('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText
 $('new-project').onclick=()=>{if(busy)return;selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
 if(window.ethereum?.on){
  for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{
+  if(disconnected)return;
   wallet=null;walletVersion++;$('withdraw').disabled=true;$('confirm-send').disabled=true;if($('confirm').open)message('Your wallet account or network changed. Cancel this review and start again.',true);
   if(connecting)return;
   syncWallet().then(()=>{if($('confirm').open)return;message(walletState.wrongNetwork?'Wrong network. Use Switch to Arc Mainnet to continue.':wallet?'Wallet updated on Arc Mainnet.':'Wallet disconnected. Connect to continue.');}).catch(error=>message(explain(error),true));
  });
- window.ethereum.on('disconnect',()=>{walletVersion++;wallet=null;$('confirm-send').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';walletState={account:null,wrongNetwork:false};updateConnectButton();$('withdraw').disabled=true;message($('confirm').open?'Wallet disconnected. Cancel this review and reconnect.':'Wallet disconnected. Reconnect to continue.',true);});
+ window.ethereum.on('disconnect',()=>{walletVersion++;wallet=null;$('confirm-send').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';walletState={account:null,wrongNetwork:false};resetActivity();updateConnectButton();$('withdraw').disabled=true;message($('confirm').open?'Wallet disconnected. Cancel this review and reconnect.':'Wallet disconnected. Reconnect to continue.',true);});
 }
 appendMember(false);appendMember(false);$('equal-shares').click();
 try{
  const response=await fetch('./contract.json');if(!response.ok)throw new Error('Could not load the contract definition.');artifact=await response.json();
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);
- const configResponse=await fetch('./deployment.json',{cache:'no-store'});if(!configResponse.ok)throw new Error('Could not load the shared deployment configuration.');const config=await configResponse.json();if(BigInt(config.chainId)!==BigInt(NETWORK.chainId))throw new Error('Shared deployment network mismatch.');
+ const configResponse=await fetch('./deployment.json',{cache:'no-store'});if(!configResponse.ok)throw new Error('Could not load the shared deployment configuration.');const config=await configResponse.json();sharedConfig=config;if(BigInt(config.chainId)!==BigInt(NETWORK.chainId))throw new Error('Shared deployment network mismatch.');
  const params=new URLSearchParams(location.search);if(params.has('network')&&params.get('network')!=='5042')throw new Error('This link is for another network. Open a mainnet project link.');const raw=params.get('contract')||config.contract||store.get(CONTRACT_KEY);
  if(params.has('project')){if(!raw)throw new Error('This project link is missing its contract address.');await loadProject(raw,params.get('project'));if(params.has('receipt'))await openReceipt(params.get('receipt'));}
  else{if(raw){await setContract(raw);message('Ready to create a mainnet agreement.');}else{$('contract-setup').open=setupMode;$('availability').textContent='Shared mainnet setup is pending. You can draft and review an agreement now; publishing becomes available after deployment.';$('publish').disabled=true;message(setupMode?'Builder setup: connect a wallet with USDC, then deploy the shared contract.':'Create and review a draft. Mainnet publishing is awaiting setup.');}}

@@ -19,3 +19,5 @@
 
 @media(max-width:600px){input,select{font-size:16px}.wallet-field input,.share input{font-size:16px}.receipt-actions{flex-wrap:wrap;gap:10px}.section-label{align-items:flex-start;flex-wrap:wrap}.project-heading{flex-wrap:wrap}.allocation strong{min-width:0}.workspace-nav{flex-wrap:wrap}.text-action{min-height:40px}}
 @media print{#receipt-body h2,#receipt-body h3{break-after:avoid}#receipt-body .receipt-amount{font-size:26px}}
+
+.activity-project{font-size:13px;white-space:nowrap;text-underline-offset:3px}#activity-status{font-size:13px;line-height:1.7;overflow-wrap:anywhere}#activity-list{margin-bottom:18px}#activity{scroll-margin-top:20px}#disconnect{padding:12px;font-size:12px}@media(max-width:600px){.wallet{display:grid;grid-template-columns:1fr auto}.wallet>span{grid-column:1/-1}.activity-project{white-space:normal}}
