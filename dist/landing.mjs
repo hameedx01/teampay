@@ -1,26 +1,23 @@
+import {units, display, allocate, landingPlan} from './money.mjs';
 const $ = id => document.getElementById(id);
-const format = n => `${n / 100n}.${String(n % 100n).padStart(2, '0')}`;
-$('payment').addEventListener('input', () => {
-  const raw = $('payment').value.trim();
-  if (!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(raw) || Number(raw) <= 0) {
-    $('calc-error').textContent = 'Enter an amount from 0.01 to 999,999.99 USDC (up to 2 decimals).';
-    $('payment').setAttribute('aria-invalid', 'true');
-    for (const id of ['expense', 'remainder', 'ada', 'tobi', 'sam']) $(id).textContent = '—';
-    $('calculation').textContent = 'Enter a valid payment to see the allocation.';
-    return;
+function update() {
+  try {
+    const raw = $('payment').value.trim();
+    if (!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(raw)) throw new Error('Enter an amount from 0.01 to 999,999.99 USDC (up to 2 decimals).');
+    const result = allocate(landingPlan, [units('60')], units(raw));
+    $('calc-error').textContent = '';
+    $('payment').removeAttribute('aria-invalid');
+    const rest = result.revenue.reduce((a,b)=>a+b,0n);
+    for (const [id,value] of Object.entries({expense:result.expenses[0],remainder:rest,ada:result.credits[0],tobi:result.credits[1],sam:result.credits[2]})) $(id).textContent=display(value);
+    $('calculation').textContent = result.remaining[0] > 0n
+      ? `${display(result.expenses[0])} repays Ada. ${display(result.remaining[0])} of the expense carries forward.`
+      : `${display(result.expenses[0])} repays Ada. The rest follows the agreed 40% / 35% / 25% shares.`;
+  } catch (error) {
+    $('calc-error').textContent=error.message;
+    $('payment').setAttribute('aria-invalid','true');
+    for(const id of ['expense','remainder','ada','tobi','sam']) $(id).textContent='—';
+    $('calculation').textContent='Enter a valid payment to see the allocation.';
   }
-  $('calc-error').textContent = '';
-  $('payment').removeAttribute('aria-invalid');
-  const [whole, decimals = ''] = raw.split('.');
-  const amount = BigInt(whole) * 100n + BigInt(decimals.padEnd(2, '0'));
-  const expense = amount < 6000n ? amount : 6000n;
-  const rest = amount - expense;
-  const share = rest / 3n;
-  const extra = rest % 3n;
-  const ada = share + (extra > 0n ? 1n : 0n);
-  const tobi = share + (extra > 1n ? 1n : 0n);
-  for (const [id, value] of Object.entries({expense, remainder: rest, ada: expense + ada, tobi, sam: share})) $(id).textContent = format(value);
-  $('calculation').textContent = amount < 6000n
-    ? `${format(expense)} repays Ada. ${format(6000n - expense)} of the expense carries forward.`
-    : `${format(expense)} repays Ada. The rest is split equally${extra ? ', with leftover cents assigned to Ada, then Tobi' : ''}.`;
-});
+}
+$('payment').addEventListener('input',update);
+update();

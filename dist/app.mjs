@@ -1,8 +1,8 @@
-import {units,display,allocate} from './money.mjs';
+import {units,display,allocate,basisPoints,DECIMALS} from './money.mjs';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initial = () => ({title:'Studio launch film',members:[{name:'Tobi',bps:4000},{name:'Ada',bps:3500},{name:'Sam',bps:2500}],expenses:[{name:'Equipment rental',member:0,amount:'200'},{name:'Production materials',member:1,amount:'100'}]});
-let plan, remaining, credits, paid, received, shared, history, preview;
+let plan, remaining, credits, paid, received, shared, history, preview, pendingPlan;
 function start(p,seed=false){plan=p;remaining=p.expenses.map(e=>units(e.amount));credits=p.members.map(()=>0n);paid=p.members.map(()=>0n);received=0n;shared=0n;history=[];if(seed){record(units('150'));record(units('100'));}render();}
 function record(amount){const result=allocate(plan,remaining,amount);remaining=result.remaining;result.credits.forEach((v,i)=>credits[i]+=v);received+=amount;shared+=result.revenue.reduce((a,b)=>a+b,0n);history.unshift({type:'payment',amount,description:result.credits.map((v,i)=>v>0n?`${plan.members[i].name}: ${display(v)}`:null).filter(Boolean).join(' · '),at:new Date().toISOString()});}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.remove('visible'),3500);}
@@ -28,6 +28,29 @@ function updatePreview(){try{const amount=units($('amount').value.trim());previe
  $('team-grid').onclick=e=>{const b=e.target.closest('[data-withdraw]');if(!b)return;const i=Number(b.dataset.withdraw),amount=credits[i];if(!amount)return;credits[i]=0n;paid[i]+=amount;history.unshift({type:'withdrawal',member:plan.members[i].name,amount,description:'Simulated transfer to recipient',at:new Date().toISOString()});render();toast('Demo withdrawal recorded. No real funds moved.');};
  $('reset').onclick=()=>{start(initial(),true);toast('Original example restored.');};
  $('edit').onclick=()=>{$('form-error').textContent='';$('builder').showModal();};$('close').onclick=()=>$('builder').close();
- $('agreement-form').onsubmit=e=>{e.preventDefault();try{const data=new FormData(e.target),get=k=>String(data.get(k)).trim();const members=[0,1,2].map(i=>({name:get(`name${i}`),bps:Math.round(Number(get(`share${i}`))*100)}));if(members.some(m=>!m.name))throw new Error('Enter a name for each collaborator.');if(!get('title'))throw new Error('Enter a project name.');const expenses=[0,1].map(i=>({name:get(`expense${i}`),member:i,amount:get(`cost${i}`)}));if(expenses.some(e=>!e.name||units(e.amount)<=0n))throw new Error('Enter a label and positive amount for each expense.');const p={title:get('title'),members,expenses};allocate(p,expenses.map(e=>units(e.amount)),1n);start(p);$('builder').close();toast('New demo agreement ready. Try the payout simulator.');}catch(error){$('form-error').textContent=error.message;}};
- $('export').onclick=()=>{const data={prototype:true,network_transactions:false,plan,received,remaining,availableToWithdraw:credits,paidOut:paid,history};const blob=new Blob([JSON.stringify(data,(_,v)=>typeof v==='bigint'?v.toString():v,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='teampay-demo-record.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Demo record exported. Amounts are in millionths of USDC.');};
+ $('agreement-form').onsubmit=e=>{e.preventDefault();try{const data=new FormData(e.target),get=k=>String(data.get(k)).trim();const members=[0,1,2].map(i=>({name:get(`name${i}`),bps:basisPoints(get(`share${i}`))}));if(members.some(m=>!m.name))throw new Error('Enter a name for each collaborator.');if(!get('title'))throw new Error('Enter a project name.');const expenses=[0,1].map(i=>({name:get(`expense${i}`),member:i,amount:get(`cost${i}`)}));if(expenses.some(e=>!e.name||units(e.amount)<=0n))throw new Error('Enter a label and positive amount for each expense.');const p={title:get('title'),members,expenses};allocate(p,expenses.map(e=>units(e.amount)),1n);pendingPlan=p;showReview();}catch(error){$('form-error').textContent=error.message;}};
+ $('export').onclick=()=>{const data={schemaVersion:2,asset:'native USDC',amountDecimals:DECIMALS,rounding:'final recipient receives smallest-unit remainder per payment',prototype:true,network_transactions:false,plan,received,remaining,availableToWithdraw:credits,paidOut:paid,history};const blob=new Blob([JSON.stringify(data,(_,v)=>typeof v==='bigint'?v.toString():v,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='teampay-demo-record.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Demo record exported. Amounts use native USDC base units (18 decimals).');};
+
+function showReview(){
+ $('review-title').textContent=pendingPlan.title;
+ $('review-content').innerHTML=`<h3>First, repay these expenses</h3><ol class="review-expenses">${pendingPlan.expenses.map(e=>`<li><div><strong>${esc(e.name)}</strong><span>${esc(pendingPlan.members[e.member].name)}</span></div><b>${display(units(e.amount))} USDC</b></li>`).join('')}</ol><h3>Then, share the remainder</h3><div class="review-shares">${pendingPlan.members.map(m=>`<div><span>${esc(m.name)}</span><strong>${m.bps/100}%</strong></div>`).join('')}</div>`;
+ $('review-ack').checked=false;
+ $('builder').close();
+ updateReview();
+ $('review-dialog').showModal();
+}
+function updateReview(){
+ if(!pendingPlan)return;
+ try{
+  const result=allocate(pendingPlan,pendingPlan.expenses.map(e=>units(e.amount)),units($('review-amount').value.trim()));
+  $('review-error').textContent='';$('review-start').disabled=false;
+  $('review-allocation').innerHTML=`<div class="review-shares">${pendingPlan.members.map((m,i)=>`<div><span>${esc(m.name)}<small>${display(result.credits[i]-result.revenue[i])} expenses + ${display(result.revenue[i])} share</small></span><strong>${display(result.credits[i])} USDC</strong></div>`).join('')}</div>`;
+ }catch(error){$('review-error').textContent=error.message;$('review-allocation').innerHTML='';$('review-start').disabled=true;}
+}
+$('review-amount').addEventListener('input',updateReview);
+function backToDetails(){$('review-dialog').close();$('builder').showModal();}
+$('review-back').onclick=backToDetails;
+$('review-close').onclick=backToDetails;
+$('review-dialog').addEventListener('cancel',event=>{event.preventDefault();backToDetails();});
+$('review-form').onsubmit=event=>{event.preventDefault();if(!pendingPlan||!$('review-ack').checked||$('review-start').disabled)return;start(pendingPlan);pendingPlan=null;$('review-dialog').close();$('edit').focus();toast('Local agreement started. No real payment or signature was made.');};
  start(initial(),true);
