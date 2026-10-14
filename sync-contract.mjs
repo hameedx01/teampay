@@ -1,9 +1,9 @@
 // Rebuild browser ABI/bytecode and publish the matching contract source with the site repo.
-// Run from the shared arc workspace, where feasibility/ contains the Foundry project.
+// The repository includes the Foundry project in feasibility/.
 import {spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,copyFileSync,mkdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-const root=fileURLToPath(new URL('../feasibility/',import.meta.url));
+const root=fileURLToPath(new URL('./feasibility/',import.meta.url));
 const result=spawnSync('forge',['build'],{cwd:root,stdio:'inherit'});if(result.status!==0)process.exit(result.status??1);
 const artifact=JSON.parse(readFileSync(root+'/out/TeamPay.sol/TeamPay.json'));
 writeFileSync(new URL('dist/contract.json',import.meta.url),JSON.stringify({abi:artifact.abi,bytecode:artifact.bytecode.object,runtime:artifact.deployedBytecode.object}));

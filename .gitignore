@@ -1,0 +1,10 @@
+.vercel/
+.openai/
+.env
+.env.*
+!.env.example
+node_modules/
+.DS_Store
+feasibility/out/
+feasibility/cache/
+feasibility/*cost-estimate.json

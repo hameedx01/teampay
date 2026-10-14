@@ -1,0 +1,11 @@
+.git
+.openai
+.vercel
+contracts
+*.test.mjs
+configure-deployment.mjs
+sync-contract.mjs
+.env
+.env.*
+node_modules
+*.tar.gz

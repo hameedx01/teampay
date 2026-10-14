@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "headers": [
+    {"source": "/deployment.json", "headers": [{"key": "Cache-Control", "value": "no-store"}]},
+    {"source": "/contract.json", "headers": [{"key": "Cache-Control", "value": "no-cache"}]}
+  ]
+}
