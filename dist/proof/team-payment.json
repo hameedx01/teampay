@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "payment-allocation-receipt",
+  "chainId": "5042",
+  "contract": "0xB8A30476424DF1b2954e9a934a66fC52463C62cD",
+  "projectId": "2",
+  "transactionHash": "0x5cd46c7a943e115601703057fe6c5eb00f2eb12fe55c4a70b0b1d6c5fc21c19e",
+  "blockNumber": 25998043,
+  "blockHash": "0xcc3d2f624891664c28d14c62118cb71f6eaa649b494b01fb9f0002a0f801488e",
+  "confirmedAt": "2026-10-14T23:09:35.000Z",
+  "asset": "native USDC",
+  "amountDecimals": 18,
+  "payer": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+  "payers": [
+    "0x940D6F7F596Aa65342fE490510b74282156C949B"
+  ],
+  "amount": "2500000000000000",
+  "amountUsdc": "0.0025",
+  "allocations": [
+    {
+      "recipient": "0x940D6F7F596Aa65342fE490510b74282156C949B",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    },
+    {
+      "recipient": "0xef4D5945A4F48943b74af0957d61638CF645Ad2b",
+      "amount": "1250000000000000",
+      "amountUsdc": "0.00125"
+    }
+  ],
+  "transactionFee": "1697120097838968",
+  "transactionFeeUsdc": "0.001697120097838968",
+  "note": "Allocation is not proof of recipient withdrawal. The network fee covers the complete transaction."
+}

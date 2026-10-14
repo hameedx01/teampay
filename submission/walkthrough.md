@@ -54,3 +54,11 @@ Record their actual wording. Do not invent interviews, testimonials, or usage me
 ## Recording the completed test
 
 Open https://product-ruby-chi.vercel.app/workspace?network=5042&contract=0xB8A30476424DF1b2954e9a934a66fC52463C62cD&project=2 . Show the 0.006 USDC received, zero expenses remaining, two 50% shares, and confirmed payment receipts. Use the withdrawal explorer links in the reconciliation evidence to demonstrate each recipient collected their funds. No further signatures are needed.
+
+## Public receipt for review
+
+https://product-ruby-chi.vercel.app/proof/team-payment is a standalone receipt generated from the confirmed project 2 payment of 0.0025 USDC. It opens without a wallet or live RPC request and includes full recipient addresses, amounts, transaction hash, and an explorer link. Use the browser Print command to save it as PDF. Its responsive and print styles have been inspected in source; actual mobile rendering and PDF pagination remain unverified.
+
+## Submission availability
+
+The DoraHacks detail page could not be fetched during the final link check (HTTP 405), and search returned no matching result. Current submission availability or a deadline extension has not been verified. The application is prepared, not submitted. Check the actual DoraHacks page while logged in before making eligibility declarations or submitting.
