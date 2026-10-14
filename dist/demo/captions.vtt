@@ -1,0 +1,58 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:01.565
+A client pays your team.
+
+00:00:01.565 --> 00:00:04.068
+Who gets repaid first, and who gets what?
+
+00:00:04.068 --> 00:00:09.076
+TeamPay makes that agreement clear, then handles the split in USDC on Arc.
+
+00:00:10.000 --> 00:00:12.570
+Here, Ada covered sixty dollars in hosting.
+
+00:00:12.570 --> 00:00:15.507
+A small payment repays part of that cost.
+
+00:00:15.507 --> 00:00:18.811
+With three hundred dollars, her expense is repaid first.
+
+00:00:18.811 --> 00:00:21.381
+The rest follows the team's agreed shares.
+
+00:00:22.250 --> 00:00:26.624
+Create one agreement with your teammates, wallet addresses, expenses, and percentages.
+
+00:00:26.624 --> 00:00:29.806
+Preview where the money will go before publishing.
+
+00:00:29.806 --> 00:00:32.987
+Then share one payment link with your client.
+
+00:00:33.875 --> 00:00:37.466
+This is a completed mainnet test with two builder controlled wallets.
+
+00:00:37.466 --> 00:00:41.384
+Four payments totaled 0.006 USDC.
+
+00:00:41.384 --> 00:00:44.322
+The expense was repaid, and the rest split equally.
+
+00:00:45.125 --> 00:00:49.969
+Each payment has a readable receipt, showing the recipients, amounts, and transaction link.
+
+00:00:49.969 --> 00:00:52.204
+Both teammates have withdrawn their earnings.
+
+00:00:52.204 --> 00:00:56.303
+Arc uses USDC for payments and network fees.
+
+00:00:57.125 --> 00:00:57.550
+TeamPay.
+
+00:00:57.550 --> 00:01:01.374
+One client payment, expenses repaid, and clear team shares.
+
+00:01:01.374 --> 00:01:07.748
+Try the example without a wallet, inspect the verified payment, or create your team's agreement.

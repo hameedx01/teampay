@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "url": "https://product-ruby-chi.vercel.app/demo",
+      "title": "Watch TeamPay · One payment. Everyone’s share.",
+      "chapters": 6,
+      "width": 390,
+      "scrollWidth": 390,
+      "duration": 68.625
+    },
+    "after": {
+      "time": 35.18709,
+      "paused": false,
+      "error": null,
+      "readyState": 4,
+      "activeChapter": "0:33Already working on Arc.",
+      "url": "https://product-ruby-chi.vercel.app/demo?t=33.875#watch"
+    }
+  },
+  {
+    "before": {
+      "url": "https://product-ruby-chi.vercel.app/demo",
+      "title": "Watch TeamPay · One payment. Everyone’s share.",
+      "chapters": 6,
+      "width": 1440,
+      "scrollWidth": 1425,
+      "duration": 68.625
+    },
+    "after": {
+      "time": 35.197275,
+      "paused": false,
+      "error": null,
+      "readyState": 4,
+      "activeChapter": "0:33Already working on Arc.",
+      "url": "https://product-ruby-chi.vercel.app/demo?t=33.875#watch"
+    }
+  }
+]

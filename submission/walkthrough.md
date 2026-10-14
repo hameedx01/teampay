@@ -23,7 +23,7 @@ Record existing evidence; do not send a new payment merely for a recording. The 
 3. Completed mainnet project showing the paid expense and payment history.
 4. Readable receipt and the explorer’s verified contract.
 
-Capture the application area only. Exclude wallet extensions, account balances unrelated to the example, personal browser tabs, bookmarks, and notifications. Browser screenshots and receipt PDFs are saved in `verification/browser/`. A narrated recording is still outstanding.
+Capture the application area only. Exclude wallet extensions, account balances unrelated to the example, personal browser tabs, bookmarks, and notifications. Browser screenshots and receipt PDFs are saved in `verification/browser/`. The narrated recording is available at `/demo`, with source narration in `submission/demo/scenes.json`.
 
 ## Manual browser checks still needed
 
@@ -62,3 +62,7 @@ https://product-ruby-chi.vercel.app/proof/team-payment is a standalone receipt g
 ## Submission availability
 
 The DoraHacks detail page could not be fetched during the final link check (HTTP 405), and search returned no matching result. Current submission availability or a deadline extension has not been verified. The application is prepared, not submitted. Check the actual DoraHacks page while logged in before making eligibility declarations or submitting.
+
+## Finished narrated walkthrough
+
+https://product-ruby-chi.vercel.app/demo contains the approximately 69-second video, clickable chapters, transcript, MP4 download, and real withdrawal links. Narration uses a synthetic English voice. The recording shows simulated examples, an unpublished draft, and existing mainnet evidence, labelled separately. It sends no transactions.

@@ -34,6 +34,7 @@ TeamPay uses Arc for immutable payment agreements, native-USDC payment allocatio
 ## Evidence
 
 - Live product: https://product-ruby-chi.vercel.app
+- Narrated product video and clickable walkthrough: https://product-ruby-chi.vercel.app/demo
 - Public team payment receipt (no wallet required): https://product-ruby-chi.vercel.app/proof/team-payment
 - Public repository: https://github.com/hameedx01/teampay
 - Builder profile: https://github.com/hameedx01

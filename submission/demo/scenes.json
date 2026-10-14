@@ -1,0 +1,44 @@
+[
+  {
+    "title": "One payment. Everyone\u2019s share.",
+    "label": "THE PRODUCT",
+    "text": "A client pays your team. Who gets repaid first, and who gets what? TeamPay makes that agreement clear, then handles the split in U S D C on Arc.",
+    "duration": 10.0,
+    "speechDuration": 9.075708333333333
+  },
+  {
+    "title": "Expenses first. Shares next.",
+    "label": "INTERACTIVE EXAMPLE \u00b7 SIMULATED",
+    "text": "Here, Ada covered sixty dollars in hosting. A small payment repays part of that cost. With three hundred dollars, her expense is repaid first. The rest follows the team's agreed shares.",
+    "duration": 12.25,
+    "speechDuration": 11.381041666666667
+  },
+  {
+    "title": "Agree before anyone pays.",
+    "label": "EDITABLE DRAFT \u00b7 NO TRANSACTION",
+    "text": "Create one agreement with your teammates, wallet addresses, expenses, and percentages. Preview where the money will go before publishing. Then share one payment link with your client.",
+    "duration": 11.625,
+    "speechDuration": 10.73725
+  },
+  {
+    "title": "Already working on Arc.",
+    "label": "CONFIRMED MAINNET TEST",
+    "text": "This is a completed mainnet test with two builder controlled wallets. Four payments totaled zero point zero zero six U S D C. The expense was repaid, and the rest split equally.",
+    "duration": 11.25,
+    "speechDuration": 10.447333333333333
+  },
+  {
+    "title": "A receipt you can verify.",
+    "label": "REAL TRANSACTION \u00b7 PUBLIC RECEIPT",
+    "text": "Each payment has a readable receipt, showing the recipients, amounts, and transaction link. Both teammates have withdrawn their earnings. Arc uses U S D C for payments and network fees.",
+    "duration": 12.0,
+    "speechDuration": 11.178083333333333
+  },
+  {
+    "title": "Make the split the easy part.",
+    "label": "TRY TEAMPAY",
+    "text": "TeamPay. One client payment, expenses repaid, and clear team shares. Try the example without a wallet, inspect the verified payment, or create your team's agreement.",
+    "duration": 11.5,
+    "speechDuration": 10.623
+  }
+]
