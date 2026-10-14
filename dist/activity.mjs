@@ -23,3 +23,15 @@ export async function loadWalletActivity(provider,artifact,contractAddress,accou
  for(let start=fromBlock;start<=end;start+=2000){const requests=[];for(let block=start;block<=Math.min(end,start+1999);block+=500)requests.push(provider.getLogs({address:contractAddress,topics,fromBlock:block,toBlock:Math.min(end,block+499)}));logs.push(...(await Promise.all(requests)).flat());}
  return {entries:walletActivityFromLogs(logs,contract.interface,account),fromBlock,toBlock:end,nextBlock:end<latest?end+1:null};
 }
+
+export async function describeWalletActivity(provider,client,contractAddress,entries){
+ const titles=new Map(),dates=new Map();
+ const jobs=[...new Set(entries.map(e=>e.projectId).filter(Boolean))].map(id=>async()=>{try{const project=await client.load(contractAddress,id);titles.set(id,project.plan.title);}catch{/* Keep the confirmed event if metadata is unavailable. */}});
+ jobs.push(...[...new Set(entries.map(e=>e.blockNumber))].map(number=>async()=>{try{const block=await provider.getBlock(number);if(block)dates.set(number,new Date(block.timestamp*1000).toISOString());}catch{/* Block numbers remain available. */}}));
+ for(let i=0;i<jobs.length;i+=4)await Promise.all(jobs.slice(i,i+4).map(job=>job()));
+ return entries.map(entry=>({...entry,projectTitle:titles.get(entry.projectId)||null,confirmedAt:dates.get(entry.blockNumber)||null}));
+}
+export function filterWalletActivity(entries,type='all'){
+ if(!['all','agreement','payment','allocation','withdrawal'].includes(type))throw new Error('Unknown activity filter.');
+ return type==='all'?entries:entries.filter(entry=>entry.type===type);
+}

@@ -1,4 +1,4 @@
-import {loadWalletActivity} from './activity.mjs';
+import {loadWalletActivity,describeWalletActivity,filterWalletActivity} from './activity.mjs';
 import {receiptHTML} from './receipt.mjs';
 import {AccountConnection,NetworkConnection,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
 import {BrowserProvider,JsonRpcProvider,Interface} from './vendor/ethers.mjs';
@@ -59,14 +59,14 @@ function updateRecipients(){
  for(const select of document.querySelectorAll('[data-expense-member]')){const value=select.value;select.innerHTML='<option value="">Choose teammate</option>'+members.map((r,i)=>`<option value="${r.dataset.member}">${esc(r.querySelector('[data-field="name"]').value||`Teammate ${i+1}`)}</option>`).join('');if(members.some(r=>r.dataset.member===value))select.value=value;else select.value='';}
  $('add-member').disabled=members.length>=10;for(const row of members)row.querySelector('.remove').disabled=members.length===1;
 }
-function appendExpense(){
+function appendExpense(focus=true){
  if($('expenses').children.length>=10)return;
  const row=document.createElement('div');row.className='expense-row';
  row.innerHTML='<label>Expense<input data-expense-name required maxlength="40" placeholder="Hosting"></label><label>Repay to<select data-expense-member required></select></label><label>Amount · USDC<input data-expense-amount inputmode="decimal" required placeholder="0.01"></label><button type="button" class="secondary remove" aria-label="Remove expense">×</button>';
  row.querySelector('button').onclick=()=>{row.remove();updateExpenseControls();updateDraft();};
  const order=document.createElement('div');order.className='expense-order';order.innerHTML='<span class="expense-position"></span><button type="button" class="text-action" data-move="up" aria-label="Repay this expense earlier">↑ Earlier</button><button type="button" class="text-action" data-move="down" aria-label="Repay this expense later">↓ Later</button>';row.prepend(order);
  order.addEventListener('click',event=>{const direction=event.target.dataset.move;if(direction==='up'&&row.previousElementSibling)row.parentElement.insertBefore(row,row.previousElementSibling);if(direction==='down'&&row.nextElementSibling)row.parentElement.insertBefore(row.nextElementSibling,row);updateExpenseControls();updateDraft();});
- $('expenses').append(row);updateRecipients();updateExpenseControls();updateDraft();row.querySelector('input').focus();
+ $('expenses').append(row);updateRecipients();updateExpenseControls();updateDraft();if(focus)row.querySelector('input').focus();
 }
 
 function updateExpenseControls(){
@@ -222,12 +222,13 @@ $('receipt-close').onclick=()=>$('receipt-dialog').close();
 $('receipt-print').onclick=()=>window.print();
 function resetActivity(){
  activityVersion++;activityRows=[];activityNext=null;activityEnd=null;activityAccount=null;activityBusy=false;
- $('activity-list').innerHTML='';$('activity-status').textContent='Connect your wallet to load your activity.';$('activity-more').hidden=true;$('activity-refresh').disabled=false;
+ $('activity-list').innerHTML='';$('activity-filter').value='all';$('activity-status').textContent='Connect your wallet to load your activity.';$('activity-more').hidden=true;$('activity-refresh').disabled=false;
 }
 function renderActivity(){
  const labels={agreement:'Agreement published',payment:'Payment sent',allocation:'Funds allocated to you',withdrawal:'Withdrawal to your wallet'};
- $('activity-list').innerHTML=activityRows.map(item=>{const link=new URL(location.origin+location.pathname);link.searchParams.set('network','5042');link.searchParams.set('contract',sharedConfig.contract);if(item.projectId)link.searchParams.set('project',item.projectId);if(item.type==='payment'||item.type==='allocation')link.searchParams.set('receipt',item.transactionHash);
- return `<article class="payment-entry"><div><strong>${labels[item.type]}${item.type==='agreement'?'':' · '+display(item.amount)+' USDC'}</strong><small>Block ${item.blockNumber.toLocaleString()}${item.projectId?' · Project #'+esc(item.projectId):' · Combined wallet balance'}</small><a href="${txLink(item.transactionHash)}" target="_blank" rel="noopener noreferrer">View transaction ↗</a></div>${item.projectId?`<a class="activity-project" href="${esc(link.href)}">${item.type==='agreement'?'Open agreement':'View receipt'} ↗</a>`:''}</article>`;}).join('');
+ const visible=filterWalletActivity(activityRows,$('activity-filter').value);
+ $('activity-list').innerHTML=visible.map(item=>{const link=new URL(location.origin+location.pathname);link.searchParams.set('network','5042');link.searchParams.set('contract',sharedConfig.contract);if(item.projectId)link.searchParams.set('project',item.projectId);if(item.type==='payment'||item.type==='allocation')link.searchParams.set('receipt',item.transactionHash);
+ return `<article class="payment-entry"><div><strong>${labels[item.type]}${item.type==='agreement'?'':' · '+display(item.amount)+' USDC'}</strong><small>${item.confirmedAt?esc(new Date(item.confirmedAt).toLocaleString())+' · ':''}Block ${item.blockNumber.toLocaleString()}</small><small>${item.projectId?esc(item.projectTitle||'Project #'+item.projectId)+' · #'+esc(item.projectId):'Combined wallet balance across projects'}</small><a href="${txLink(item.transactionHash)}" target="_blank" rel="noopener noreferrer">View transaction ↗</a></div>${item.projectId?`<a class="activity-project" href="${esc(link.href)}">${item.type==='agreement'?'Open agreement':'View receipt'} ↗</a>`:''}</article>`;}).join('')||'<p class="fine">No matching activity in the blocks loaded so far. Load more activity to check later blocks.</p>';
 }
 async function refreshActivity(more=false){
  if(activityBusy)return;
@@ -240,15 +241,17 @@ async function refreshActivity(more=false){
  try{
   const fromBlock=more&&activityNext!==null?activityNext:activityEnd!==null?activityEnd+1:sharedConfig.deploymentBlock;
   const page=await loadWalletActivity(reader,artifact,sharedConfig.contract,account,{fromBlock});
+  const described=await describeWalletActivity(reader,client,sharedConfig.contract,page.entries);
   if(version!==activityVersion||disconnected||walletState.account?.toLowerCase()!==account.toLowerCase())return;
   activityEnd=Math.max(activityEnd??0,page.toBlock);activityNext=page.nextBlock;
-  activityRows=[...new Map([...activityRows,...page.entries].map(item=>[item.key,item])).values()].sort((a,b)=>b.blockNumber-a.blockNumber||b.logIndex-a.logIndex);renderActivity();
+  activityRows=[...new Map([...activityRows,...described].map(item=>[item.key,item])).values()].sort((a,b)=>b.blockNumber-a.blockNumber||b.logIndex-a.logIndex);renderActivity();
   $('activity-status').textContent=`${activityRows.length} activity record${activityRows.length===1?'':'s'} for ${short(account)}. Checked blocks ${sharedConfig.deploymentBlock.toLocaleString()}–${activityEnd.toLocaleString()}. ${activityNext!==null?'More blocks remain. Use Load more activity to continue.':activityRows.length?'Up to date at this block.':'No activity found for this wallet.'}`;
   $('activity-more').hidden=activityNext===null;
  }catch(error){if(version===activityVersion)$('activity-status').textContent='Could not load activity. '+explain(error)+' Try Refresh activity.';}
  finally{if(version===activityVersion){activityBusy=false;$('activity-refresh').disabled=false;$('activity-more').disabled=false;}}
 }
 $('show-activity').onclick=()=>{$('activity').hidden=false;void refreshActivity();};
+$('activity-filter').onchange=renderActivity;
 $('activity-refresh').onclick=()=>void refreshActivity();$('activity-more').onclick=()=>void refreshActivity(true);
 $('disconnect').onclick=()=>{
  if(busy||connecting)return;
@@ -284,6 +287,19 @@ if(window.ethereum?.on){
  window.ethereum.on('disconnect',()=>{walletVersion++;wallet=null;$('confirm-send').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';walletState={account:null,wrongNetwork:false};resetActivity();updateConnectButton();$('withdraw').disabled=true;message($('confirm').open?'Wallet disconnected. Cancel this review and reconnect.':'Wallet disconnected. Reconnect to continue.',true);});
 }
 appendMember(false);appendMember(false);$('equal-shares').click();
+if(new URLSearchParams(location.search).get('acceptance')==='two-wallet'){
+ try{
+  const response=await fetch('./two-wallet-plan.json');if(!response.ok)throw new Error('Could not load the test draft.');
+  const prepared=await response.json(),plan=normalizePlan(prepared.plan);
+  $('members').replaceChildren();$('expenses').replaceChildren();
+  $('project-form').elements.title.value=plan.title;
+  for(const member of plan.members){appendMember(false);const row=$('members').lastElementChild;row.querySelector('[data-field="name"]').value=member.name;row.querySelector('[data-field="address"]').value=member.address;row.querySelector('[data-field="share"]').value=(member.bps/100).toFixed(2);}
+  updateRecipients();
+  for(const expense of plan.expenses){appendExpense(false);const row=$('expenses').lastElementChild;row.querySelector('[data-expense-name]').value=expense.name;row.querySelector('[data-expense-amount]').value=expense.amount;row.querySelector('select').value=$('members').children[expense.member].dataset.member;}
+  $('draft-payment').value='0.003';updateExpenseControls();updateDraft();$('acceptance-note').hidden=false;
+ }catch(error){message('Test draft could not be loaded: '+explain(error),true);}
+}
+
 try{
  const response=await fetch('./contract.json');if(!response.ok)throw new Error('Could not load the contract definition.');artifact=await response.json();
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);

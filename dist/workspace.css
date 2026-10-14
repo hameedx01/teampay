@@ -21,3 +21,5 @@
 @media print{#receipt-body h2,#receipt-body h3{break-after:avoid}#receipt-body .receipt-amount{font-size:26px}}
 
 .activity-project{font-size:13px;white-space:nowrap;text-underline-offset:3px}#activity-status{font-size:13px;line-height:1.7;overflow-wrap:anywhere}#activity-list{margin-bottom:18px}#activity{scroll-margin-top:20px}#disconnect{padding:12px;font-size:12px}@media(max-width:600px){.wallet{display:grid;grid-template-columns:1fr auto}.wallet>span{grid-column:1/-1}.activity-project{white-space:normal}}
+
+.activity-filter{max-width:260px;margin:20px 0;font-size:13px}.activity-filter select{min-height:44px}#acceptance-note p{margin-bottom:0}

@@ -24,3 +24,11 @@ test('activity rejects an untrusted contract or invalid range',async()=>{
  await assert.rejects(loadWalletActivity({},artifact,a,a,{fromBlock:-1}),/range/);
  await assert.rejects(loadWalletActivity({getCode:async()=>'0x'},artifact,a,a,{fromBlock:0}),/does not match/);
 });
+
+import {describeWalletActivity,filterWalletActivity} from './dist/activity.mjs';
+test('activity descriptions load each project and date once and keep events when metadata fails',async()=>{
+ let reads=0,blocks=0;const rows=[{projectId:'1',blockNumber:10,type:'agreement'},{projectId:'1',blockNumber:10,type:'payment'},{projectId:'2',blockNumber:11,type:'allocation'},{projectId:null,blockNumber:11,type:'withdrawal'}];
+ const described=await describeWalletActivity({getBlock:async n=>{blocks++;return {timestamp:n};}},{load:async(_,id)=>{reads++;if(id==='2')throw new Error('RPC unavailable');return {plan:{title:'Website design'}};}},a,rows);
+ assert.equal(reads,2);assert.equal(blocks,2);assert.equal(described[0].projectTitle,'Website design');assert.equal(described[1].confirmedAt,'1970-01-01T00:00:10.000Z');assert.equal(described[2].projectTitle,null);assert.equal(described.length,4);
+ assert.deepEqual(filterWalletActivity(described,'payment'),[described[1]]);assert.equal(filterWalletActivity(described,'all').length,4);assert.throws(()=>filterWalletActivity(described,'unknown'),/Unknown/);
+});

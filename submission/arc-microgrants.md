@@ -46,7 +46,7 @@ The first mainnet acceptance test used the builder’s own wallet as payer and s
 
 ## Technical credibility and limits
 
-The repository includes 42 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
+The repository includes 44 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
 
 Solidity source is verified on Sourcify with exact creation/runtime matches, and Arc Explorer displays verified source. Verification is not an audit. No independent audit or customer traction is claimed. Multiple-recipient mainnet validation, real-team feedback, mobile visual QA, and receipt print-preview QA remain outstanding. Mobile wallet pairing is not implemented; an injected browser wallet is required.
 

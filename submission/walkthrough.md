@@ -50,3 +50,16 @@ Show someone the landing page without explaining it. Ask:
 5. Would this solve a problem on your last team project? What is missing?
 
 Record their actual wording. Do not invent interviews, testimonials, or usage metrics.
+
+## Prepared two-wallet draft
+
+Open https://product-ruby-chi.vercel.app/workspace?acceptance=two-wallet to load the editable draft. It does not connect, publish, or send funds automatically.
+
+- HameedX: `0x940D6F7F596Aa65342fE490510b74282156C949B`, 50%.
+- Second teammate: `0xef4D5945A4F48943b74af0957d61638CF645Ad2b`, 50%.
+- Expense: 0.001 USDC to HameedX.
+- First payment: 0.0005 USDC; expected unpaid expense 0.0005 USDC, no revenue allocation yet.
+- Second payment: 0.0025 USDC; expected final allocated totals 0.002 USDC to HameedX and 0.001 USDC to the second wallet.
+- Each wallet withdraws its own balance. The second wallet currently has no mainnet USDC for gas; fund it before testing its direct withdrawal.
+
+Do not publish the draft twice. After publishing, use the resulting project link for both payments. These actions still require explicit wallet signatures. Visual browser checks remain outstanding.
