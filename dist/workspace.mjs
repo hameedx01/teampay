@@ -1,6 +1,6 @@
 import {loadWalletActivity,describeWalletActivity,filterWalletActivity} from './activity.mjs';
 import {receiptHTML} from './receipt.mjs';
-import {AccountConnection,NetworkConnection,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
+import {AccountConnection,NetworkConnection,revokeWalletAccess,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
 import {BrowserProvider,JsonRpcProvider,Interface} from './vendor/ethers.mjs';
 import {NETWORK,TeamPayClient,address,normalizePlan} from './chain.mjs';
 import {units,display,allocate,basisPoints} from './money.mjs';
@@ -260,11 +260,15 @@ async function refreshActivity(more=false){
 $('show-activity').onclick=()=>{$('activity').hidden=false;void refreshActivity();};
 $('activity-filter').onchange=renderActivity;
 $('activity-refresh').onclick=()=>void refreshActivity();$('activity-more').onclick=()=>void refreshActivity(true);
-$('disconnect').onclick=()=>{
+$('disconnect').onclick=async()=>{
  if(busy||connecting)return;
+ const provider=window.ethereum;connecting=true;
  disconnected=true;store.set(DISCONNECT_KEY,'true');walletVersion++;wallet=null;walletState={account:null,wrongNetwork:false};accountConnection=null;networkConnection=null;resetActivity();
  $('withdraw').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';$('confirm-send').disabled=true;updateConnectButton();
- message('Disconnected from TeamPay. Reconnect when you want to use your wallet. Extension permissions can be removed separately in your wallet.');
+ message('Disconnecting this site from your wallet…');
+ try{await revokeWalletAccess(provider);message('Disconnected from TeamPay and wallet account access removed. Connect again to choose an account.');}
+ catch{message('Disconnected from TeamPay. Your wallet could not remove this site’s permission automatically. In MetaMask, open this site’s connection or permissions and disconnect it there.');}
+ finally{connecting=false;updateConnectButton();}
 };
 $('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Mainnet.');});
 $('reset-wallet-request').onclick=()=>{if(accountConnection?.inFlight){message('Close or cancel the request in your wallet first.');return;}accountConnection?.resetAfterCancellation();updateConnectButton();message('You can now try Connect wallet again.');};

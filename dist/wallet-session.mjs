@@ -37,3 +37,10 @@ export class NetworkConnection {
   })().finally(()=>{this.inFlight=null;});return this.inFlight;
  }
 }
+
+export async function revokeWalletAccess(provider){
+ if(!provider?.request)throw new Error('Wallet provider is unavailable.');
+ await provider.request({method:'wallet_revokePermissions',params:[{eth_accounts:{}}]});
+ const accounts=await provider.request({method:'eth_accounts'});
+ if(accounts.length)throw new Error('The wallet still grants this site account access.');
+}

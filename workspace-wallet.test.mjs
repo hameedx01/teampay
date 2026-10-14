@@ -51,9 +51,9 @@ test('direct receipt view uses verified payment data without asking for a wallet
 
 test('intentional disconnect clears wallet state and blocks passive reconnection',async()=>{
  const f=fixture();f.chain(NETWORK.chainId);await f.sync();
- const saved=new Map();Object.assign(f.context,{store:{set:(key,value)=>saved.set(key,value)},DISCONNECT_KEY:'disconnect',resetActivity(){},message(){}});
+ const saved=new Map();Object.assign(f.context,{store:{set:(key,value)=>saved.set(key,value)},DISCONNECT_KEY:'disconnect',revokeWalletAccess:async()=>{},resetActivity(){},message(){}});
  vm.runInContext(source.slice(source.indexOf("$('disconnect').onclick="),source.indexOf("$('check-wallet').onclick=")),f.context);
- f.$('disconnect').onclick();assert.equal(saved.get('disconnect'),'true');assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');assert.equal(f.$('disconnect').hidden,true);
+ await f.$('disconnect').onclick();assert.equal(saved.get('disconnect'),'true');assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');assert.equal(f.$('disconnect').hidden,true);
  await f.sync();assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');
 });
 

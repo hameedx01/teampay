@@ -48,3 +48,11 @@ test('disconnect and manual chain changes are reflected by read-only snapshots',
  let accounts=['0xabc'],chain=network.chainId;const provider={request:async({method})=>method==='eth_accounts'?accounts:chain};
  assert.equal((await walletSnapshot(provider,network.chainId)).wrongNetwork,false);chain='0x1';assert.equal((await walletSnapshot(provider,network.chainId)).wrongNetwork,true);accounts=[];assert.equal((await walletSnapshot(provider,network.chainId)).account,null);
 });
+
+test('disconnect revokes site account permission and checks access was removed',async()=>{
+ const {revokeWalletAccess}=await import('./dist/wallet-session.mjs');const calls=[];
+ await revokeWalletAccess({request:async request=>{calls.push(request);return request.method==='eth_accounts'?[]:null;}});
+ assert.deepEqual(calls,[{method:'wallet_revokePermissions',params:[{eth_accounts:{}}]},{method:'eth_accounts'}]);
+ await assert.rejects(revokeWalletAccess({request:async request=>request.method==='eth_accounts'?['0xabc']:null}),/still grants/);
+ await assert.rejects(revokeWalletAccess({request:async()=>{throw new Error('Unsupported');}}),/Unsupported/);
+});
