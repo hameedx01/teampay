@@ -6,7 +6,9 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const short=s=>`${s.slice(0,6)}…${s.slice(-4)}`;
 const store={get(key){try{return localStorage.getItem(key);}catch{return null;}},set(key,value){try{localStorage.setItem(key,value);}catch{}},remove(key){try{localStorage.removeItem(key);}catch{}}};
 const KEY='teampay.arc-testnet.pending.v1',CONTRACT_KEY='teampay.arc-testnet.contract.v1';
-let client,reader,artifact,wallet=null,busy=false,selected=null,draft=null,contractAddress='',memberCount=0;
+let client,reader,artifact,wallet=null,busy=false,selected=null,draft=null,contractAddress='',memberCount=0,historyRows=[],historyCursor=null,historyStart=null,historyEnd=null,historyVersion=0;
+const setupMode=new URLSearchParams(location.search).get('setup')==='1';
+$('contract-setup').hidden=!setupMode;
 let pending;try{pending=JSON.parse(store.get(KEY)||'null');}catch{pending=null;}
 const message=(text,error=false)=>{$('status').textContent=text;$('status').classList.toggle('error',error);for(const el of document.querySelectorAll('.dialog-status')){el.textContent=error?text:'';}};
 function explain(error){if(error.code===4001||error.code==='ACTION_REJECTED')return 'Request cancelled in your wallet. No new transaction was submitted.';return error.shortMessage||error.message||'The request failed. Please try again.';}
@@ -47,7 +49,7 @@ async function connect(){
  wallet={provider,signer,account};$('wallet-label').textContent=short(account)+' · Arc Testnet';$('connect').textContent='Reconnect wallet';
  if(selected)await refreshWithdrawal();return wallet;
 }
-async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;return contractAddress;}
+async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;$('availability').textContent='Testnet payments are configured. Review your agreement before publishing.';$('publish').disabled=false;return contractAddress;}
 function txLink(hash){return NETWORK.blockExplorerUrls[0]+'/tx/'+hash;}
 function showPending(){
  $('check-pending').hidden=!pending;
@@ -57,7 +59,7 @@ async function recover(receipt){
  const operation=pending;pending=null;store.remove(KEY);$('check-pending').hidden=true;
  if(receipt.status!==1){$('transaction-status').textContent='Transaction reverted. It did not complete; the network fee may still have been charged.';throw new Error('Transaction reverted. Review the agreement and wallet balance before retrying.');}
  $('transaction-status').innerHTML=`Confirmed on Arc Testnet. <a href="${txLink(receipt.hash)}" target="_blank" rel="noopener noreferrer">View receipt ↗</a>`;
- if(operation.kind==='deploy'){await setContract(receipt.contractAddress);message('Testnet contract deployed. You can now publish an agreement.');return;}
+ if(operation.kind==='deploy'){await setContract(receipt.contractAddress);message('Testnet contract deployed. Share this contract address and deployment transaction with the builder to configure it for everyone.');$('contract-setup').hidden=false;$('contract-setup').open=true;return;}
  if(operation.kind==='create'){
   const iface=new Interface(artifact.abi);let projectId;
   for(const log of receipt.logs){try{const event=iface.parseLog(log);if(event?.name==='ProjectPublished')projectId=event.args.projectId.toString();}catch{}}
@@ -97,14 +99,14 @@ async function refreshWithdrawal(){
 }
 async function loadProject(raw,id){
  message('Loading the agreement and balances from Arc Testnet…');
- $('project').hidden=true;selected=null;
+ $('project').hidden=true;selected=null;historyVersion++;historyRows=[];historyCursor=null;$('payment-history').innerHTML='';$('history-scope').textContent='';$('history-earlier').hidden=true;
  const loaded=await client.load(raw,id);selected=loaded;contractAddress=await loaded.contract.getAddress();store.set(CONTRACT_KEY,contractAddress);
  const url=new URL(location.href);url.search='';url.searchParams.set('contract',contractAddress);url.searchParams.set('project',id);history.replaceState(null,'',url);
  $('share-link').value=url.href;$('title').textContent=loaded.plan.title;$('project-id').textContent='Project #'+id;
  $('verified').textContent='Contract code matches this TeamPay build. Agreement and balances were read from Arc Testnet. This is not a security audit.';
  $('total').textContent=display(loaded.state.received)+' USDC';$('remaining').textContent=display(loaded.state.remainingExpenses.reduce((a,b)=>a+b,0n))+' USDC';
  $('agreement').innerHTML=agreementHTML(loaded.plan,loaded.state.remainingExpenses);
- $('setup').hidden=true;$('project').hidden=false;updatePayment();await refreshWithdrawal();message('Project loaded. Share the link or preview a test payment.');
+ $('setup').hidden=true;$('project').hidden=false;updatePayment();await refreshWithdrawal();message('Project loaded. Share the link or preview a test payment.');await loadHistory(true);
 }
 function updatePayment(){
  if(!selected)return;
@@ -112,27 +114,54 @@ function updatePayment(){
  $('payment-preview').innerHTML=result.credits.map((amount,i)=>`<div class="allocation"><span>${esc(selected.plan.members[i].name)}</span><strong>${display(amount)} USDC</strong></div>`).join('');$('pay').disabled=false;
  }catch(error){$('payment-preview').textContent=explain(error);$('pay').disabled=true;}
 }
+
+function renderHistory(){
+ $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} test USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><button class="secondary" data-receipt="${p.hash}">Download receipt</button></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
+ $('history-scope').textContent=`Showing ${historyRows.length} payment transaction${historyRows.length===1?'':'s'} from blocks ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()}. ${historyCursor===null?'Searched back to the start of the chain.':'Earlier payments may exist.'}`;
+ $('history-earlier').hidden=historyCursor===null;
+}
+async function loadHistory(reset=false){
+ if(!selected)return;
+ const version=historyVersion,current=selected;
+ $('history-refresh').disabled=true;$('history-earlier').disabled=true;$('history-scope').textContent='Loading confirmed payment events…';
+ try{
+  const page=await client.paymentHistory(await current.contract.getAddress(),current.id,reset?{}:{toBlock:historyCursor});
+  if(version!==historyVersion||selected!==current)return;
+  if(reset){historyRows=[];historyEnd=page.toBlock;}
+  historyStart=page.fromBlock;historyCursor=page.earlierBlock;
+  historyRows=[...new Map([...historyRows,...page.payments].map(p=>[p.hash,p])).values()];renderHistory();
+ }catch(error){if(version===historyVersion)$('history-scope').textContent='Payment history could not be loaded. '+explain(error)+' Use Refresh history to retry.';}
+ finally{$('history-refresh').disabled=false;$('history-earlier').disabled=false;}
+}
+$('history-refresh').onclick=()=>run(()=>loadHistory(true));
+$('history-earlier').onclick=()=>run(()=>loadHistory(false));
+$('payment-history').onclick=event=>{const button=event.target.closest('[data-receipt]');if(!button)return;run(async()=>{
+ const receipt=await client.paymentReceipt(contractAddress,selected.id,button.dataset.receipt);
+ const blob=new Blob([JSON.stringify({...receipt,projectTitle:selected.plan.title},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download=`teampay-project-${selected.id}-${receipt.transactionHash.slice(2,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Confirmed payment receipt downloaded. It records allocations, not withdrawals.');
+});};
 $('connect').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Testnet.');});
 $('deploy').onclick=()=>run(async()=>{await sendReviewed('deploy',await client.deployTransaction());});
 $('use-contract').onclick=()=>run(async()=>{await setContract($('contract-address').value);message('Contract verified. Create an agreement below.');});
 $('add-member').onclick=appendMember;$('add-expense').onclick=appendExpense;
 $('project-form').onsubmit=e=>{e.preventDefault();run(async()=>{draft=readForm();$('review-body').innerHTML=agreementHTML(draft);$('ack').checked=false;$('review').showModal();});};
 $('edit').onclick=()=>$('review').close();
-$('publish').onclick=()=>run(async()=>{if(!$('ack').checked)throw new Error('Check the agreement and tick the acknowledgement before publishing.');if(!contractAddress)throw new Error('Choose or deploy a testnet contract before publishing. Close this review and open Testnet contract setup.');const plan=normalizePlan(draft);await sendReviewed('create',await client.createTransaction(contractAddress,plan));});
+$('publish').onclick=()=>run(async()=>{if(!$('ack').checked)throw new Error('Check the agreement and tick the acknowledgement before publishing.');if(!contractAddress)throw new Error('Publishing is not available until the shared testnet contract is configured. You can still review your draft.');const plan=normalizePlan(draft);await sendReviewed('create',await client.createTransaction(contractAddress,plan));});
 $('payment-form').onsubmit=e=>{e.preventDefault();run(async()=>{const current=await client.load(contractAddress,selected.id);selected=current;updatePayment();const amount=units($('pay-amount').value.trim());if(amount<=0n)throw new Error('Enter a positive payment.');await sendReviewed('pay',await selected.contract.pay.populateTransaction(selected.id,{value:amount}));});};
 $('pay-amount').addEventListener('input',updatePayment);
 $('withdraw').onclick=()=>run(async()=>{if(!wallet)await connect();const balance=await selected.contract.claimable(wallet.account);if(!balance)throw new Error('No balance is available to withdraw.');await sendReviewed('claim',await selected.contract.claim.populateTransaction(wallet.account));});
 $('refresh').onclick=()=>run(async()=>{await loadProject(contractAddress,selected.id);});
 $('check-pending').onclick=()=>run(checkPending);
 $('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText($('share-link').value);message('Project link copied. It loads the agreement from Arc Testnet.');}catch{$('share-link').select();message('Select and copy the project link from the field.');}});
-$('new-project').onclick=()=>{if(busy)return;selected=null;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
+$('new-project').onclick=()=>{if(busy)return;selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
 if(window.ethereum?.on){for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{wallet=null;$('wallet-label').textContent='Wallet changed · reconnect';$('withdraw').disabled=true;$('withdrawable').textContent='Reconnect to refresh your balance.';});}
 appendMember();appendMember();
 try{
  const response=await fetch('./contract.json');if(!response.ok)throw new Error('Could not load the contract definition.');artifact=await response.json();
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);
- const params=new URLSearchParams(location.search);const raw=params.get('contract')||store.get(CONTRACT_KEY);
+ const configResponse=await fetch('./deployment.json',{cache:'no-store'});if(!configResponse.ok)throw new Error('Could not load the shared deployment configuration.');const config=await configResponse.json();if(BigInt(config.chainId)!==BigInt(NETWORK.chainId))throw new Error('Shared deployment network mismatch.');
+ const params=new URLSearchParams(location.search);const raw=params.get('contract')||config.contract||store.get(CONTRACT_KEY);
  if(params.has('project')){if(!raw)throw new Error('This project link is missing its contract address.');await loadProject(raw,params.get('project'));}
- else{if(raw)await setContract(raw);else $('contract-setup').open=true;message('Ready. Create an agreement, or connect a wallet to set up a testnet contract.');}
+ else{if(raw){await setContract(raw);message('Ready to create a testnet agreement.');}else{$('contract-setup').open=setupMode;$('availability').textContent='Shared testnet setup is pending. You can draft and review an agreement now; publishing becomes available after deployment.';$('publish').disabled=true;message(setupMode?'Builder setup: connect a wallet with test USDC, then deploy the shared contract.':'Create and review a draft. Testnet publishing is awaiting setup.');}}
  if(pending){if(!/^0x[0-9a-fA-F]{64}$/.test(pending.hash))throw new Error('Saved transaction record is invalid.');showPending();await checkPending();}
 }catch(error){message(explain(error),true);}
