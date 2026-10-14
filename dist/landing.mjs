@@ -19,5 +19,8 @@ function update() {
     $('calculation').textContent='Enter a valid payment to see the allocation.';
   }
 }
-$('payment').addEventListener('input',update);
+const presets=[...document.querySelectorAll('[data-payment]')];
+function reflectPreset(){for(const button of presets)button.setAttribute('aria-pressed',String(button.dataset.payment===$('payment').value.trim()));}
+for(const button of presets)button.addEventListener('click',()=>{$('payment').value=button.dataset.payment;update();reflectPreset();});
+$('payment').addEventListener('input',()=>{update();reflectPreset();});
 update();
