@@ -8,7 +8,9 @@ TeamPay helps freelance teams agree on upfront costs and revenue shares, publish
 
 ## Deployment status
 
-The hosted workspace currently targets **Arc Testnet (5042002)**. The shared contract is not configured. **No Arc mainnet deployment is claimed.** The Arc Microgrants submission requires a working mainnet deployment; this is a remaining release requirement.
+The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Explorer source verification is unconfirmed because automated access was blocked; see [verification instructions](verification/README.md).
+
+The hosted payment workspace still targets **Arc Testnet (5042002)**. Mainnet app configuration and a real payment/withdrawal remain necessary before submission.
 
 Arc Mainnet is chain **5042**, using native USDC with 18 decimals for gas and payments. Changing the network label alone does not constitute deployment. `dist/deployment.json` must contain a verified deployment on the selected chain.
 
