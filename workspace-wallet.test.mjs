@@ -56,3 +56,15 @@ test('intentional disconnect clears wallet state and blocks passive reconnection
  f.$('disconnect').onclick();assert.equal(saved.get('disconnect'),'true');assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');assert.equal(f.$('disconnect').hidden,true);
  await f.sync();assert.equal(f.context.wallet,null);assert.equal(f.$('connect').textContent,'Connect wallet');
 });
+
+test('confirmed payment clears the amount before refreshing; reverted payment preserves it',async()=>{
+ for(const status of [1,0]){
+  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'0.0025',hidden:true});return elements.get(id);};
+  let refreshed=false;
+  const context=vm.createContext({$,pending:{kind:'pay',value:'2500000000000000',contract:'0xcontract',projectId:'2'},store:{remove(){}},KEY:'pending',txLink:()=>'/tx/hash',display:()=> '0.0025',updatePayment(){ $('pay').disabled=true;},message(){},loadProject:async()=>{refreshed=true;assert.equal($('pay-amount').value,'');assert.equal($('payment-success').hidden,false);}});
+  vm.runInContext(source.slice(source.indexOf('async function recover('),source.indexOf('async function checkPending(')),context);
+  const result=vm.runInContext(`recover({status:${status},hash:'hash'})`,context);
+  if(status===1){await result;assert.equal(refreshed,true);assert.match($('payment-success').textContent,/0.0025 USDC confirmed/);assert.equal($('pay').disabled,true);}
+  else{await assert.rejects(result,/reverted/);assert.equal($('pay-amount').value,'0.0025');assert.equal($('payment-success').hidden,true);assert.equal(refreshed,false);}
+ }
+});

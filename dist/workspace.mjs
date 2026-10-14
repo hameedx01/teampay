@@ -130,13 +130,19 @@ async function recover(receipt){
  if(receipt.status!==1){$('transaction-status').textContent='Transaction reverted. It did not complete; the network fee may still have been charged.';throw new Error('Transaction reverted. Review the agreement and wallet balance before retrying.');}
  $('transaction-status').innerHTML=`Confirmed on Arc Mainnet. <a href="${txLink(receipt.hash)}" target="_blank" rel="noopener noreferrer">View receipt ↗</a>`;
  if(operation.kind==='deploy'){await setContract(receipt.contractAddress);message('Mainnet contract deployed. Share this contract address and deployment transaction with the builder to configure it for everyone.');$('contract-setup').hidden=false;$('contract-setup').open=true;return;}
+ if(operation.kind==='pay'){
+  $('pay-amount').value='';updatePayment();
+  const paid=operation.value?display(BigInt(operation.value))+' USDC':'Your payment';
+  $('payment-success').textContent=paid+' confirmed on Arc Mainnet. This payment is complete. Enter a new amount only if you want to make another payment.';
+  $('payment-success').hidden=false;
+ }
  if(operation.kind==='create'){
   const iface=new Interface(artifact.abi);let projectId;
   for(const log of receipt.logs){try{const event=iface.parseLog(log);if(event?.name==='ProjectPublished')projectId=event.args.projectId.toString();}catch{}}
   if(!projectId)throw new Error('Transaction confirmed, but its project event was not found. Keep the transaction receipt.');
   await loadProject(operation.contract,projectId);$('review').close();
  }else if(operation.projectId)await loadProject(operation.contract,operation.projectId);
- message('Transaction confirmed. Balances are loaded from Arc Mainnet.');
+ message(operation.kind==='pay'?$('payment-success').textContent:'Transaction confirmed. Balances are loaded from Arc Mainnet.');
 }
 async function checkPending(){if(!pending)return;const receipt=await reader.getTransactionReceipt(pending.hash);if(receipt)await recover(receipt);else{showPending();message('The transaction is still pending or not yet visible to this RPC. Check the explorer before taking further action.');}}
 async function sendReviewed(kind,tx){
@@ -163,7 +169,7 @@ async function sendReviewed(kind,tx){
  assertReviewCurrent();
  message('Approve the transaction in your wallet.');
  const response=await reviewedWallet.signer.sendTransaction(transaction);
- pending={hash:response.hash,kind,contract:contractAddress,projectId:selected?.id??null};store.set(KEY,JSON.stringify(pending));showPending();message('Transaction submitted. Waiting for confirmation…');
+ pending={hash:response.hash,kind,value:value.toString(),contract:contractAddress,projectId:selected?.id??null};store.set(KEY,JSON.stringify(pending));showPending();message('Transaction submitted. Waiting for confirmation…');
  try{const receipt=await reader.waitForTransaction(response.hash,1,120000);if(receipt)await recover(receipt);}catch(error){if(pending)throw new Error('Confirmation is taking longer than expected. Your transaction may still complete. Use “Check pending transaction” or the explorer.');throw error;}
 }
 async function refreshWithdrawal(){
@@ -180,10 +186,11 @@ async function loadProject(raw,id){
  $('verified').textContent='Contract code matches this TeamPay build. Agreement and balances were read from Arc Mainnet. This is not a security audit.';
  $('total').textContent=display(loaded.state.received)+' USDC';$('remaining').textContent=display(loaded.state.remainingExpenses.reduce((a,b)=>a+b,0n))+' USDC';
  $('agreement').innerHTML=agreementHTML(loaded.plan,loaded.state.remainingExpenses);
- $('setup').hidden=true;$('project').hidden=false;updatePayment();await refreshWithdrawal();message('Project loaded. Share the link or preview a test payment.');await loadHistory(true);
+ $('setup').hidden=true;$('project').hidden=false;updatePayment();await refreshWithdrawal();message('Project loaded. Share the link or preview a payment.');await loadHistory(true);
 }
 function updatePayment(){
  if(!selected)return;
+ if(!$('pay-amount').value.trim()){$('payment-preview').textContent='Enter an amount to preview how a new payment will be allocated.';$('pay').disabled=true;return;}
  try{const result=allocate(selected.plan,[...selected.state.remainingExpenses],units($('pay-amount').value.trim()));
  $('payment-preview').innerHTML=result.credits.map((amount,i)=>`<div class="allocation"><span>${esc(selected.plan.members[i].name)}</span><strong>${display(amount)} USDC</strong></div>`).join('');$('pay').disabled=walletState.wrongNetwork;
  }catch(error){$('payment-preview').textContent=explain(error);$('pay').disabled=true;}
