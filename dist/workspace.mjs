@@ -16,8 +16,8 @@ function updateConnectButton(){
  $('wallet-help').hidden=!waiting&&!accountConnection?.pending;
  $('network-help').hidden=!walletState.wrongNetwork;
  $('switch-network').disabled=connecting||switching;
- $('switch-network').textContent=switching?'Approve in your wallet…':'Switch to Arc Testnet';
- $('wallet-label').textContent=walletState.account?short(walletState.account)+(walletState.wrongNetwork?' · Wrong network':wallet?' · Arc Testnet':' · Checking network…'):'Wallet not connected';
+ $('switch-network').textContent=switching?'Approve in your wallet…':'Switch to Arc Mainnet';
+ $('wallet-label').textContent=walletState.account?short(walletState.account)+(walletState.wrongNetwork?' · Wrong network':wallet?' · Arc Mainnet':' · Checking network…'):'Wallet not connected';
  if(walletState.wrongNetwork){$('pay').disabled=true;$('publish').disabled=true;$('deploy').disabled=true;$('withdraw').disabled=true;}
  else{$('deploy').disabled=false;$('publish').disabled=!contractAddress;if(selected)updatePayment();}
 }
@@ -25,13 +25,13 @@ async function syncWallet(){
  if(!window.ethereum?.request)return;
  const version=++walletVersion;wallet=null;$('withdraw').disabled=true;$('withdrawable').textContent='Checking wallet…';
  const state=await walletSnapshot(window.ethereum,NETWORK.chainId);if(version!==walletVersion)return;
- walletState=state;if(state.wrongNetwork)$('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(state.chainId))+'). Switch to Arc Testnet before publishing or making a payment.';updateConnectButton();
+ walletState=state;if(state.wrongNetwork)$('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(state.chainId))+'). Switch to Arc Mainnet before publishing or making a payment.';updateConnectButton();
  if(state.account&&!state.wrongNetwork){const provider=new BrowserProvider(window.ethereum);const signer=await provider.getSigner(state.account);if(version!==walletVersion)return;wallet={provider,signer,account:state.account};}
  if(version!==walletVersion)return;updateConnectButton();if(selected)await refreshWithdrawal();
 }
-const KEY='teampay.arc-testnet.pending.v1',CONTRACT_KEY='teampay.arc-testnet.contract.v1';
+const KEY='teampay.arc-mainnet.pending.v1',CONTRACT_KEY='teampay.arc-mainnet.contract.v1';
 let client,reader,artifact,wallet=null,busy=false,selected=null,draft=null,contractAddress='',memberCount=0,historyRows=[],historyCursor=null,historyStart=null,historyEnd=null,historyVersion=0;
-const setupMode=new URLSearchParams(location.search).get('setup')==='1';
+const setupMode=false; // The shared mainnet contract is already deployed.
 $('contract-setup').hidden=!setupMode;
 let pending;try{pending=JSON.parse(store.get(KEY)||'null');}catch{pending=null;}
 const message=(text,error=false)=>{$('status').textContent=text;$('status').classList.toggle('error',error);for(const el of document.querySelectorAll('.dialog-status')){el.textContent=error?text:'';}};
@@ -97,13 +97,13 @@ async function connect(){
   const request=connectionSession().connect();updateConnectButton();message('Approve the connection in your wallet. Connecting does not move funds.');await request;
   await syncWallet();
   if(walletState.wrongNetwork){
-   $('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(walletState.chainId))+'). Approve the switch to Arc Testnet in your wallet.';
-   message('Wrong network. Switch to Arc Testnet to continue.');
+   $('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(walletState.chainId))+'). Approve the switch to Arc Mainnet in your wallet.';
+   message('Wrong network. Switch to Arc Mainnet to continue.');
    networkConnection??=new NetworkConnection(window.ethereum,NETWORK);
    const switching=networkConnection.switch();updateConnectButton();
    try{await switching;}catch(error){
     const code=Number(walletErrorCode(error));
-    const text=code===4001?'Network switch cancelled. Your wallet is connected, but payments stay disabled until you switch to Arc Testnet.':code===-32002?'A network request is already open. Open your wallet and approve or cancel it, then try switching again.':explain(error);
+    const text=code===4001?'Network switch cancelled. Your wallet is connected, but payments stay disabled until you switch to Arc Mainnet.':code===-32002?'A network request is already open. Open your wallet and approve or cancel it, then try switching again.':explain(error);
     $('network-message').textContent=text;throw new Error(text);
    }
    await syncWallet();
@@ -111,24 +111,24 @@ async function connect(){
   if(!wallet)throw new Error('Wallet connection changed. Please connect again.');return wallet;
  }finally{connecting=false;updateConnectButton();}
 }
-async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;$('availability').textContent='Testnet payments are configured. Review your agreement before publishing.';$('publish').disabled=walletState.wrongNetwork;return contractAddress;}
+async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;$('availability').textContent='Mainnet payments are configured. Review your agreement before publishing.';$('publish').disabled=walletState.wrongNetwork;return contractAddress;}
 function txLink(hash){return NETWORK.blockExplorerUrls[0]+'/tx/'+hash;}
 function showPending(){
  $('check-pending').hidden=!pending;
- if(pending)$('transaction-status').innerHTML=`Submitted on Arc Testnet. <a href="${txLink(pending.hash)}" target="_blank" rel="noopener noreferrer">View transaction ↗</a>. Waiting for confirmation; do not submit it again.`;
+ if(pending)$('transaction-status').innerHTML=`Submitted on Arc Mainnet. <a href="${txLink(pending.hash)}" target="_blank" rel="noopener noreferrer">View transaction ↗</a>. Waiting for confirmation; do not submit it again.`;
 }
 async function recover(receipt){
  const operation=pending;pending=null;store.remove(KEY);$('check-pending').hidden=true;
  if(receipt.status!==1){$('transaction-status').textContent='Transaction reverted. It did not complete; the network fee may still have been charged.';throw new Error('Transaction reverted. Review the agreement and wallet balance before retrying.');}
- $('transaction-status').innerHTML=`Confirmed on Arc Testnet. <a href="${txLink(receipt.hash)}" target="_blank" rel="noopener noreferrer">View receipt ↗</a>`;
- if(operation.kind==='deploy'){await setContract(receipt.contractAddress);message('Testnet contract deployed. Share this contract address and deployment transaction with the builder to configure it for everyone.');$('contract-setup').hidden=false;$('contract-setup').open=true;return;}
+ $('transaction-status').innerHTML=`Confirmed on Arc Mainnet. <a href="${txLink(receipt.hash)}" target="_blank" rel="noopener noreferrer">View receipt ↗</a>`;
+ if(operation.kind==='deploy'){await setContract(receipt.contractAddress);message('Mainnet contract deployed. Share this contract address and deployment transaction with the builder to configure it for everyone.');$('contract-setup').hidden=false;$('contract-setup').open=true;return;}
  if(operation.kind==='create'){
   const iface=new Interface(artifact.abi);let projectId;
   for(const log of receipt.logs){try{const event=iface.parseLog(log);if(event?.name==='ProjectPublished')projectId=event.args.projectId.toString();}catch{}}
   if(!projectId)throw new Error('Transaction confirmed, but its project event was not found. Keep the transaction receipt.');
   await loadProject(operation.contract,projectId);$('review').close();
  }else if(operation.projectId)await loadProject(operation.contract,operation.projectId);
- message('Transaction confirmed. Balances are loaded from Arc Testnet.');
+ message('Transaction confirmed. Balances are loaded from Arc Mainnet.');
 }
 async function checkPending(){if(!pending)return;const receipt=await reader.getTransactionReceipt(pending.hash);if(receipt)await recover(receipt);else{showPending();message('The transaction is still pending or not yet visible to this RPC. Check the explorer before taking further action.');}}
 async function sendReviewed(kind,tx){
@@ -139,11 +139,12 @@ async function sendReviewed(kind,tx){
  const gas=await reader.estimateGas({...tx,from:account});const gasLimit=gas*120n/100n;
  const fees=await reader.getFeeData();const gasPrice=fees.maxFeePerGas??fees.gasPrice;if(!gasPrice)throw new Error('Could not estimate the network fee.');
  const maxFee=gasLimit*gasPrice;const value=BigInt(tx.value??0);
- if(await reader.getBalance(account)<value+maxFee)throw new Error('Insufficient test USDC for the payment and estimated fee. Use the Circle faucet.');
+ if(maxFee>100000000000000000n)throw new Error('The estimated network fee exceeds the 0.10 USDC transaction limit. Try again when fees are lower.');
+ if(await reader.getBalance(account)<value+maxFee)throw new Error('Insufficient USDC for the payment and estimated fee. Fund your wallet with USDC on Arc Mainnet.');
  const transaction={...tx,gasLimit,chainId:BigInt(NETWORK.chainId),from:account};
  if(fees.maxFeePerGas){transaction.maxFeePerGas=gasPrice;transaction.maxPriorityFeePerGas=fees.maxPriorityFeePerGas??0n;}else transaction.gasPrice=gasPrice;
- $('confirm-title').textContent={deploy:'Deploy testnet contract',create:'Publish your agreement',pay:'Confirm test payment',claim:'Withdraw your test USDC'}[kind];
- $('confirm-body').innerHTML=`<div class="allocation"><span>Network</span><strong>Arc Testnet</strong></div><div class="allocation"><span>Wallet</span><strong>${esc(account)}</strong></div><div class="allocation"><span>${kind==='claim'?'Transfer to your wallet':'Payment amount'}</span><strong>${kind==='claim'?display(await selected.contract.claimable(account)):display(value)} test USDC</strong></div><div class="allocation"><span>Estimated maximum network fee</span><strong>${display(maxFee)} test USDC</strong></div><p class="fine">Includes a 20% gas-limit buffer. Actual fees may be lower.</p>`;
+ $('confirm-title').textContent={deploy:'Deploy mainnet contract',create:'Publish your agreement',pay:'Confirm payment',claim:'Withdraw your USDC'}[kind];
+ $('confirm-body').innerHTML=`<div class="allocation"><span>Network</span><strong>Arc Mainnet</strong></div><div class="allocation"><span>Wallet</span><strong>${esc(account)}</strong></div><div class="allocation"><span>${kind==='claim'?'Transfer to your wallet':'Payment amount'}</span><strong>${kind==='claim'?display(await selected.contract.claimable(account)):display(value)} USDC</strong></div><div class="allocation"><span>Estimated maximum network fee</span><strong>${display(maxFee)} USDC</strong></div><p class="fine">Includes a 20% gas-limit buffer. Actual fees may be lower.</p>`;
  if(kind==='pay'){$('confirm-body').innerHTML+=`<h3>Current payment allocation</h3>${$('payment-preview').innerHTML}<p class="fine">This preview uses the latest loaded balances. Another payment confirmed first can change expense repayment versus revenue sharing.</p>`;}
  assertReviewCurrent();
  const approved=await new Promise(resolve=>{const close=value=>{$('confirm').close();resolve(value);};$('confirm-send').onclick=()=>close(true);$('confirm-cancel').onclick=()=>close(false);$('confirm').oncancel=e=>{e.preventDefault();close(false);};$('confirm-send').disabled=false;$('confirm').showModal();});
@@ -160,15 +161,15 @@ async function sendReviewed(kind,tx){
 async function refreshWithdrawal(){
  $('withdraw').disabled=true;
  if(!wallet){$('withdrawable').textContent='Connect a wallet to view your balance.';return;}
- const currentWallet=wallet,currentProject=selected;const balance=await currentProject.contract.claimable(currentWallet.account);if(wallet!==currentWallet||selected!==currentProject)return;$('withdrawable').textContent=display(balance)+' test USDC';$('withdraw').disabled=balance===0n;
+ const currentWallet=wallet,currentProject=selected;const balance=await currentProject.contract.claimable(currentWallet.account);if(wallet!==currentWallet||selected!==currentProject)return;$('withdrawable').textContent=display(balance)+' USDC';$('withdraw').disabled=balance===0n;
 }
 async function loadProject(raw,id){
- message('Loading the agreement and balances from Arc Testnet…');
+ message('Loading the agreement and balances from Arc Mainnet…');
  $('project').hidden=true;selected=null;historyVersion++;historyRows=[];historyCursor=null;$('payment-history').innerHTML='';$('history-scope').textContent='';$('history-earlier').hidden=true;
  const loaded=await client.load(raw,id);selected=loaded;contractAddress=await loaded.contract.getAddress();store.set(CONTRACT_KEY,contractAddress);
- const url=new URL(location.href);url.search='';url.searchParams.set('contract',contractAddress);url.searchParams.set('project',id);history.replaceState(null,'',url);
+ const url=new URL(location.href);url.search='';url.searchParams.set('network','5042');url.searchParams.set('contract',contractAddress);url.searchParams.set('project',id);history.replaceState(null,'',url);
  $('share-link').value=url.href;$('title').textContent=loaded.plan.title;$('project-id').textContent='Project #'+id;
- $('verified').textContent='Contract code matches this TeamPay build. Agreement and balances were read from Arc Testnet. This is not a security audit.';
+ $('verified').textContent='Contract code matches this TeamPay build. Agreement and balances were read from Arc Mainnet. This is not a security audit.';
  $('total').textContent=display(loaded.state.received)+' USDC';$('remaining').textContent=display(loaded.state.remainingExpenses.reduce((a,b)=>a+b,0n))+' USDC';
  $('agreement').innerHTML=agreementHTML(loaded.plan,loaded.state.remainingExpenses);
  $('setup').hidden=true;$('project').hidden=false;updatePayment();await refreshWithdrawal();message('Project loaded. Share the link or preview a test payment.');await loadHistory(true);
@@ -181,7 +182,7 @@ function updatePayment(){
 }
 
 function renderHistory(){
- $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} test USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><button class="secondary" data-receipt="${p.hash}">Download receipt</button></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
+ $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><button class="secondary" data-receipt="${p.hash}">Download receipt</button></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
  $('history-scope').textContent=`Showing ${historyRows.length} payment transaction${historyRows.length===1?'':'s'} from blocks ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()}. ${historyCursor===null?'Searched back to the start of the chain.':'Earlier payments may exist.'}`;
  $('history-earlier').hidden=historyCursor===null;
 }
@@ -205,29 +206,29 @@ $('payment-history').onclick=event=>{const button=event.target.closest('[data-re
  const blob=new Blob([JSON.stringify({...receipt,projectTitle:selected.plan.title},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
  link.href=url;link.download=`teampay-project-${selected.id}-${receipt.transactionHash.slice(2,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Confirmed payment receipt downloaded. It records allocations, not withdrawals.');
 });};
-$('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Testnet.');});
+$('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Mainnet.');});
 $('reset-wallet-request').onclick=()=>{if(accountConnection?.inFlight){message('Close or cancel the request in your wallet first.');return;}accountConnection?.resetAfterCancellation();updateConnectButton();message('You can now try Connect wallet again.');};
-$('switch-network').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Testnet.');});
-$('connect').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Testnet.');});
-$('deploy').onclick=()=>run(async()=>{await sendReviewed('deploy',await client.deployTransaction());});
+$('switch-network').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Mainnet.');});
+$('connect').onclick=()=>run(async()=>{await connect();message('Wallet connected to Arc Mainnet.');});
+$('deploy').onclick=()=>message('The shared mainnet contract is already deployed. No new deployment is needed.');
 $('use-contract').onclick=()=>run(async()=>{await setContract($('contract-address').value);message('Contract verified. Create an agreement below.');});
 $('add-member').onclick=appendMember;$('add-expense').onclick=appendExpense;
 $('project-form').onsubmit=e=>{e.preventDefault();run(async()=>{try{draft=readForm();$('draft-form-error').textContent='';}catch(error){$('draft-form-error').textContent=explain(error);$('draft-form-error').scrollIntoView({block:'center',behavior:'smooth'});throw error;}$('review-body').innerHTML=agreementHTML(draft);$('ack').checked=false;$('review').showModal();});};
 function returnToDraft(){$('review').close();$('review-draft').focus();}
 $('edit').onclick=returnToDraft;$('review-close-top').onclick=returnToDraft;
-$('publish').onclick=()=>run(async()=>{if(!$('ack').checked)throw new Error('Check the agreement and tick the acknowledgement before publishing.');if(!contractAddress)throw new Error('Publishing is not available until the shared testnet contract is configured. You can still review your draft.');const plan=normalizePlan(draft);await sendReviewed('create',await client.createTransaction(contractAddress,plan));});
+$('publish').onclick=()=>run(async()=>{if(!$('ack').checked)throw new Error('Check the agreement and tick the acknowledgement before publishing.');if(!contractAddress)throw new Error('Publishing is not available until the shared mainnet contract is configured. You can still review your draft.');const plan=normalizePlan(draft);await sendReviewed('create',await client.createTransaction(contractAddress,plan));});
 $('payment-form').onsubmit=e=>{e.preventDefault();run(async()=>{const current=await client.load(contractAddress,selected.id);selected=current;updatePayment();const amount=units($('pay-amount').value.trim());if(amount<=0n)throw new Error('Enter a positive payment.');await sendReviewed('pay',await selected.contract.pay.populateTransaction(selected.id,{value:amount}));});};
 $('pay-amount').addEventListener('input',updatePayment);
 $('withdraw').onclick=()=>run(async()=>{if(!wallet)await connect();const balance=await selected.contract.claimable(wallet.account);if(!balance)throw new Error('No balance is available to withdraw.');await sendReviewed('claim',await selected.contract.claim.populateTransaction(wallet.account));});
 $('refresh').onclick=()=>run(async()=>{await loadProject(contractAddress,selected.id);});
 $('check-pending').onclick=()=>run(checkPending);
-$('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText($('share-link').value);message('Project link copied. It loads the agreement from Arc Testnet.');}catch{$('share-link').select();message('Select and copy the project link from the field.');}});
+$('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText($('share-link').value);message('Project link copied. It loads the agreement from Arc Mainnet.');}catch{$('share-link').select();message('Select and copy the project link from the field.');}});
 $('new-project').onclick=()=>{if(busy)return;selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
 if(window.ethereum?.on){
  for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{
   wallet=null;walletVersion++;$('withdraw').disabled=true;$('confirm-send').disabled=true;if($('confirm').open)message('Your wallet account or network changed. Cancel this review and start again.',true);
   if(connecting)return;
-  syncWallet().then(()=>{if($('confirm').open)return;message(walletState.wrongNetwork?'Wrong network. Use Switch to Arc Testnet to continue.':wallet?'Wallet updated on Arc Testnet.':'Wallet disconnected. Connect to continue.');}).catch(error=>message(explain(error),true));
+  syncWallet().then(()=>{if($('confirm').open)return;message(walletState.wrongNetwork?'Wrong network. Use Switch to Arc Mainnet to continue.':wallet?'Wallet updated on Arc Mainnet.':'Wallet disconnected. Connect to continue.');}).catch(error=>message(explain(error),true));
  });
  window.ethereum.on('disconnect',()=>{walletVersion++;wallet=null;$('confirm-send').disabled=true;$('withdrawable').textContent='Connect a wallet to view your balance.';walletState={account:null,wrongNetwork:false};updateConnectButton();$('withdraw').disabled=true;message($('confirm').open?'Wallet disconnected. Cancel this review and reconnect.':'Wallet disconnected. Reconnect to continue.',true);});
 }
@@ -236,9 +237,9 @@ try{
  const response=await fetch('./contract.json');if(!response.ok)throw new Error('Could not load the contract definition.');artifact=await response.json();
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);
  const configResponse=await fetch('./deployment.json',{cache:'no-store'});if(!configResponse.ok)throw new Error('Could not load the shared deployment configuration.');const config=await configResponse.json();if(BigInt(config.chainId)!==BigInt(NETWORK.chainId))throw new Error('Shared deployment network mismatch.');
- const params=new URLSearchParams(location.search);const raw=params.get('contract')||config.contract||store.get(CONTRACT_KEY);
+ const params=new URLSearchParams(location.search);if(params.has('network')&&params.get('network')!=='5042')throw new Error('This link is for another network. Open a mainnet project link.');const raw=params.get('contract')||config.contract||store.get(CONTRACT_KEY);
  if(params.has('project')){if(!raw)throw new Error('This project link is missing its contract address.');await loadProject(raw,params.get('project'));}
- else{if(raw){await setContract(raw);message('Ready to create a testnet agreement.');}else{$('contract-setup').open=setupMode;$('availability').textContent='Shared testnet setup is pending. You can draft and review an agreement now; publishing becomes available after deployment.';$('publish').disabled=true;message(setupMode?'Builder setup: connect a wallet with test USDC, then deploy the shared contract.':'Create and review a draft. Testnet publishing is awaiting setup.');}}
+ else{if(raw){await setContract(raw);message('Ready to create a mainnet agreement.');}else{$('contract-setup').open=setupMode;$('availability').textContent='Shared mainnet setup is pending. You can draft and review an agreement now; publishing becomes available after deployment.';$('publish').disabled=true;message(setupMode?'Builder setup: connect a wallet with USDC, then deploy the shared contract.':'Create and review a draft. Mainnet publishing is awaiting setup.');}}
  await syncWallet();
  if(pending){if(!/^0x[0-9a-fA-F]{64}$/.test(pending.hash))throw new Error('Saved transaction record is invalid.');showPending();await checkPending();}
 }catch(error){message(explain(error),true);}

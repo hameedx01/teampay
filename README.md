@@ -8,9 +8,9 @@ TeamPay helps freelance teams agree on upfront costs and revenue shares, publish
 
 ## Deployment status
 
-The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Source is publicly verified on [Sourcify](https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD), with exact creation and runtime matches. Arc Explorer verification remains unconfirmed because its Cloudflare challenge blocked submission; see [verification details](verification/README.md).
+The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Source is publicly verified on [Sourcify](https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD), with exact creation and runtime matches. Arc Explorer also shows verified TeamPay source, confirmed by the builder’s screenshot; see [verification details](verification/README.md).
 
-The hosted payment workspace still targets **Arc Testnet (5042002)**. Mainnet app configuration and a real payment/withdrawal remain necessary before submission.
+The hosted payment workspace targets **Arc Mainnet (5042)** and uses the shared deployed contract. A real agreement/payment/withdrawal acceptance test remains outstanding; local integration tests have passed.
 
 Arc Mainnet is chain **5042**, using native USDC with 18 decimals for gas and payments. Changing the network label alone does not constitute deployment. `dist/deployment.json` must contain a verified deployment on the selected chain.
 
@@ -50,7 +50,7 @@ Partial payments carry unpaid expenses forward. The final teammate receives smal
 
 ## Mainnet release work
 
-Deploy and verify the contract on Arc mainnet, configure the app and wallet flow for that chain, complete a small real payment and withdrawal, and record explorer links. The builder has a **1 USDC gas budget**; estimates must be refreshed before any signing. Payment principal is separate from gas.
+Deployment, source verification, and mainnet app configuration are complete. Complete a small real payment and withdrawal and record explorer links. The builder has a **1 USDC gas budget**; estimates must be refreshed before any signing. Payment principal is separate from gas.
 
 Read-only deployment estimate (no transaction is sent):
 
@@ -59,7 +59,7 @@ node sync-contract.mjs
 python3 feasibility/estimate.py --contract TeamPay
 ```
 
-The normal workspace builder tool targets testnet only. A separate builder page at `/mainnet-setup` prepares an **Arc Mainnet** deployment through the connected wallet. It sends no principal, caps the app-requested fee at 0.10 USDC, requires an explicit review, and records pending attempts to discourage duplicate deployments. Do not increase the reviewed fee in your wallet. It is not part of the ordinary customer flow.
+The normal workspace uses the existing mainnet contract; users do not deploy contracts. A separate builder page at `/mainnet-setup` prepares an **Arc Mainnet** deployment through the connected wallet. It sends no principal, caps the app-requested fee at 0.10 USDC, requires an explicit review, and records pending attempts to discourage duplicate deployments. Do not increase the reviewed fee in your wallet. It is not part of the ordinary customer flow.
 
 After confirmation, verify the creation receipt and runtime code without signing:
 
@@ -67,7 +67,7 @@ After confirmation, verify the creation receipt and runtime code without signing
 node configure-deployment.mjs <contract-address> <deployment-tx-hash> --mainnet
 ```
 
-This writes `dist/mainnet-deployment.json` separately. It deliberately does not activate the currently testnet-only workspace. Mainnet app configuration and real payment/withdrawal verification remain release steps.
+This writes `dist/mainnet-deployment.json`. The active `dist/deployment.json` contains the same verified mainnet configuration. Real payment/withdrawal acceptance verification remains outstanding.
 
 ## Inspiration and limitations
 

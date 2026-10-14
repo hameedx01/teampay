@@ -8,7 +8,7 @@ Deployment succeeded on Arc Mainnet, chain 5042. Creation and runtime bytecode m
 
 **Sourcify source verification succeeded on 2026-10-14**, with exact matches for creation and runtime code. Public verification record: https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD
 
-Arc Explorer source verification is **unconfirmed**. Cloudflare blocked automated verification. Bytecode matching is not an explorer verification badge or security audit.
+Arc Explorer source verification is **confirmed by the builder’s screenshot**, displaying TeamPay, both Solidity files, compiler 0.8.30, Cancun, optimizer 200, and a verification timestamp of Oct 14, 2026 23:17:36 (explorer display time). Automated API access remains blocked by Cloudflare. Source verification is not a security audit.
 
 ## Submit in your browser
 

@@ -1,6 +1,7 @@
 import {Contract, ContractFactory, getAddress, ZeroAddress, zeroPadValue, toBeHex} from './vendor/ethers.mjs';
 import {units,validatePlan,display} from './money.mjs';
-export const NETWORK={chainId:'0x4cef52',chainName:'Arc Testnet',nativeCurrency:{name:'USDC',symbol:'USDC',decimals:18},rpcUrls:['https://rpc.blockdaemon.testnet.arc.io'],blockExplorerUrls:['https://explorer.testnet.arc.io']};
+import {MAINNET} from './mainnet-deployment.mjs';
+export const NETWORK=MAINNET;
 export function address(value){const result=getAddress(String(value).trim());if(result===ZeroAddress)throw new Error('The zero address cannot receive payments.');return result;}
 export function normalizePlan(input){
  const text=(s,max)=>{if(typeof s!=='string'||!s.trim()||s.trim().length>max)throw new Error('Enter a valid project, teammate, or expense name.');return s.trim();};

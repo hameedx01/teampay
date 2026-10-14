@@ -6,7 +6,7 @@
   "deploymentFeeUSDC": "0.024063141252486437",
   "creationBytecodeMatches": true,
   "runtimeBytecodeMatches": true,
-  "explorerSourceVerification": "unconfirmed: Cloudflare blocked automated verification",
+  "explorerSourceVerification": "confirmed by builder-provided explorer screenshot; automated API access blocked",
   "compiler": "0.8.30+commit.73712a01",
   "sourcifyVerification": {
     "matchId": "56125087",

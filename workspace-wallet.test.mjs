@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {walletSnapshot} from './dist/wallet-session.mjs';
+import {NETWORK} from './dist/chain.mjs';
 const source=readFileSync(new URL('./dist/workspace.mjs',import.meta.url),'utf8');
 function fixture(){
  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  let accounts=['0x1234567890'],chain='0x1';
  const provider={request:async({method})=>method==='eth_accounts'?accounts:chain};
- const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK:{chainId:'0x4cef52'},short:s=>s,accountConnection:null,wallet:null,selected:null,contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
+ const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK,short:s=>s,accountConnection:null,wallet:null,selected:null,contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
  vm.runInContext(source.slice(source.indexOf('let networkConnection='),source.indexOf('const KEY=')),context);
  return {$,context,sync:()=>vm.runInContext('syncWallet()',context),chain:v=>chain=v,accounts:v=>accounts=v};
 }
@@ -17,7 +18,7 @@ test('workspace displays wrong-network banner and blocks transaction controls',a
  for(const id of ['pay','publish','deploy','withdraw'])assert.equal(f.$(id).disabled,true);
 });
 test('manual switch restores connected state; account revocation clears it',async()=>{
- const f=fixture();await f.sync();f.chain('0x4cef52');await f.sync();assert.equal(f.$('network-help').hidden,true);assert.equal(f.$('connect').textContent,'Connected');assert.equal(f.$('publish').disabled,false);
+ const f=fixture();await f.sync();f.chain(NETWORK.chainId);await f.sync();assert.equal(f.$('network-help').hidden,true);assert.equal(f.$('connect').textContent,'Connected');assert.equal(f.$('publish').disabled,false);
  f.accounts([]);await f.sync();assert.equal(f.$('connect').textContent,'Connect wallet');assert.equal(f.$('wallet-label').textContent,'Wallet not connected');
 });
 
@@ -26,9 +27,9 @@ function reviewFixture(changeAt){
  const invalidate=()=>vm.runInContext('walletVersion++;',context);
  const $=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',close(){},showModal(){opened++;if(changeAt==='review')invalidate();queueMicrotask(()=>elements.get('confirm-send').onclick());}});return elements.get(id);};
  const signer={sendTransaction:async()=>{sent++;return {hash:'0xhash'};}};
- context=vm.createContext({$,queueMicrotask,pending:null,wallet:{account:'0xabc',signer},walletVersion:1,selected:null,contractAddress:'0xcontract',NETWORK:{chainId:'0x4cef52'},
+ context=vm.createContext({$,queueMicrotask,pending:null,wallet:{account:'0xabc',signer},walletVersion:1,selected:null,contractAddress:'0xcontract',NETWORK,
   reader:{estimateGas:async()=>{if(changeAt==='estimate')invalidate();return 100n;},getFeeData:async()=>({gasPrice:1n}),getBalance:async()=>1000n,waitForTransaction:async()=>null},
-  window:{ethereum:{request:async({method})=>{if(changeAt==='verification'&&method==='eth_chainId')invalidate();return method==='eth_accounts'?['0xabc']:'0x4cef52';}}},
+  window:{ethereum:{request:async({method})=>{if(changeAt==='verification'&&method==='eth_chainId')invalidate();return method==='eth_accounts'?['0xabc']:NETWORK.chainId;}}},
   display:String,esc:String,message(){},store:{set(){}},KEY:'test',showPending(){},recover(){}});
  vm.runInContext(source.slice(source.indexOf('async function sendReviewed('),source.indexOf('async function refreshWithdrawal(')),context);
  return {send:()=>vm.runInContext("sendReviewed('pay',{value:1n})",context),sent:()=>sent,opened:()=>opened};
