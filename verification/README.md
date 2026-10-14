@@ -6,7 +6,9 @@ Transaction: `0x5753f681d1a21184e96710739bab944164e439f3d268ca4c88e8070e104a1899
 
 Deployment succeeded on Arc Mainnet, chain 5042. Creation and runtime bytecode match our artifacts. The standard JSON input was independently recompiled and matches both exactly.
 
-Explorer source verification is **unconfirmed**. Cloudflare blocked automated verification. Bytecode matching is not an explorer verification badge or security audit.
+**Sourcify source verification succeeded on 2026-10-14**, with exact matches for creation and runtime code. Public verification record: https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD
+
+Arc Explorer source verification is **unconfirmed**. Cloudflare blocked automated verification. Bytecode matching is not an explorer verification badge or security audit.
 
 ## Submit in your browser
 

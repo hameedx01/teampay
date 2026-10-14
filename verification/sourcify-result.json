@@ -1,0 +1,24 @@
+{
+  "isJobCompleted": true,
+  "verificationId": "b81e07f3-9f0f-4f0d-84f6-02dbcde87d32",
+  "jobStartTime": "2026-10-14T22:16:24Z",
+  "jobFinishTime": "2026-10-14T22:16:25Z",
+  "compilationTime": "174",
+  "externalVerifications": {
+    "etherscan": {
+      "error": "Daily limit of 500 source code submissions reached"
+    },
+    "blockscout": {
+      "error": "Explorer verification request failed (403): Cloudflare browser challenge"
+    }
+  },
+  "contract": {
+    "match": "exact_match",
+    "creationMatch": "exact_match",
+    "runtimeMatch": "exact_match",
+    "chainId": "5042",
+    "address": "0xB8A30476424DF1b2954e9a934a66fC52463C62cD",
+    "verifiedAt": "2026-10-14T22:16:25Z",
+    "matchId": "56125087"
+  }
+}

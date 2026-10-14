@@ -8,7 +8,7 @@ TeamPay helps freelance teams agree on upfront costs and revenue shares, publish
 
 ## Deployment status
 
-The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Explorer source verification is unconfirmed because automated access was blocked; see [verification instructions](verification/README.md).
+The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Source is publicly verified on [Sourcify](https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD), with exact creation and runtime matches. Arc Explorer verification remains unconfirmed because its Cloudflare challenge blocked submission; see [verification details](verification/README.md).
 
 The hosted payment workspace still targets **Arc Testnet (5042002)**. Mainnet app configuration and a real payment/withdrawal remain necessary before submission.
 
