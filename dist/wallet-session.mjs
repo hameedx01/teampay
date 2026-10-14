@@ -33,7 +33,7 @@ export class NetworkConnection {
    catch(error){if(Number(walletErrorCode(error))!==4902)throw error;await request('wallet_addEthereumChain',[this.network]);
     if(BigInt(await request('eth_chainId'))!==BigInt(this.network.chainId))await request('wallet_switchEthereumChain',[{chainId:this.network.chainId}]);
    }
-   if(BigInt(await request('eth_chainId'))!==BigInt(this.network.chainId))throw new Error('Your wallet is still on another network. Switch to Arc Testnet to continue.');
+   if(BigInt(await request('eth_chainId'))!==BigInt(this.network.chainId))throw new Error(`Your wallet is still on another network. Switch to ${this.network.chainName} to continue.`);
   })().finally(()=>{this.inFlight=null;});return this.inFlight;
  }
 }

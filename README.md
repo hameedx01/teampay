@@ -57,7 +57,15 @@ node sync-contract.mjs
 python3 feasibility/estimate.py --contract TeamPay
 ```
 
-The current browser deployment tool targets testnet only. Do not use it expecting a mainnet deployment.
+The normal workspace builder tool targets testnet only. A separate builder page at `/mainnet-setup` prepares an **Arc Mainnet** deployment through the connected wallet. It sends no principal, caps the app-requested fee at 0.10 USDC, requires an explicit review, and records pending attempts to discourage duplicate deployments. Do not increase the reviewed fee in your wallet. It is not part of the ordinary customer flow.
+
+After confirmation, verify the creation receipt and runtime code without signing:
+
+```sh
+node configure-deployment.mjs <contract-address> <deployment-tx-hash> --mainnet
+```
+
+This writes `dist/mainnet-deployment.json` separately. It deliberately does not activate the currently testnet-only workspace. Mainnet app configuration and real payment/withdrawal verification remain release steps.
 
 ## Inspiration and limitations
 
