@@ -38,3 +38,13 @@ for(const stage of ['estimate','review','verification'])test(`wallet change duri
  const f=reviewFixture(stage);await assert.rejects(f.send(),/wallet account or network changed/);assert.equal(f.sent(),0);if(stage==='estimate')assert.equal(f.opened(),0);
 });
 test('unchanged approved wallet review submits once',async()=>{const f=reviewFixture();await f.send();assert.equal(f.sent(),1);assert.equal(f.opened(),1);});
+
+test('direct receipt view uses verified payment data without asking for a wallet',async()=>{
+ const evidence=JSON.parse(readFileSync(new URL('./verification/mainnet-flow.json',import.meta.url)));
+ const {receiptHTML}=await import('./dist/receipt.mjs');let opened=0,calls=0;
+ const elements={'receipt-body':{},'receipt-dialog':{showModal(){opened++;}}};
+ const context=vm.createContext({$:id=>elements[id],selected:{id:'1',plan:{title:'Website design'}},contractAddress:evidence.contract,receiptHTML,client:{paymentReceipt:async(address,id,hash)=>{calls++;assert.equal(address,evidence.contract);assert.equal(id,'1');assert.equal(hash,evidence.transactions.payment);return evidence.paymentReceipt;}}});
+ vm.runInContext(source.slice(source.indexOf('async function openReceipt('),source.indexOf("$('payment-history').onclick=")),context);
+ await vm.runInContext(`openReceipt('${evidence.transactions.payment}')`,context);
+ assert.equal(calls,1);assert.equal(opened,1);assert.match(elements['receipt-body'].innerHTML,/0.01 USDC/);
+});

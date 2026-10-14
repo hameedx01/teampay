@@ -16,3 +16,6 @@
 
 .receipt-actions{display:flex;align-items:center;gap:14px}.receipt-amount{font:600 32px Manrope,sans-serif;overflow-wrap:anywhere}#receipt-body{overflow-wrap:anywhere}#receipt-body .allocation strong{font-size:12px;max-width:65%}#receipt-body .fine a{font-size:11px}
 @media print{body:has(#receipt-dialog[open])>*:not(#receipt-dialog){display:none!important}#receipt-dialog[open]{position:static;display:block;width:100%;max-width:none;max-height:none;height:auto;overflow:visible;border:0;padding:0;margin:0;background:white;color:#173c31}#receipt-dialog::backdrop{background:white}.receipt-controls{display:none!important}#receipt-body .allocation{break-inside:avoid}#receipt-body a{color:inherit;text-decoration:none}}
+
+@media(max-width:600px){input,select{font-size:16px}.wallet-field input,.share input{font-size:16px}.receipt-actions{flex-wrap:wrap;gap:10px}.section-label{align-items:flex-start;flex-wrap:wrap}.project-heading{flex-wrap:wrap}.allocation strong{min-width:0}.workspace-nav{flex-wrap:wrap}.text-action{min-height:40px}}
+@media print{#receipt-body h2,#receipt-body h3{break-after:avoid}#receipt-body .receipt-amount{font-size:26px}}

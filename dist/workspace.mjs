@@ -202,12 +202,15 @@ async function loadHistory(reset=false){
 }
 $('history-refresh').onclick=()=>run(()=>loadHistory(true));
 $('history-earlier').onclick=()=>run(()=>loadHistory(false));
-$('payment-history').onclick=event=>{const button=event.target.closest('[data-receipt]');if(!button)return;run(async()=>{
- const receipt=await client.paymentReceipt(contractAddress,selected.id,button.dataset.receipt);
- if(button.dataset.format!=='json'){$('receipt-body').innerHTML=receiptHTML(receipt,selected.plan.title);$('receipt-dialog').showModal();return;}
- const blob=new Blob([JSON.stringify({...receipt,projectTitle:selected.plan.title},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
- link.href=url;link.download=`teampay-project-${selected.id}-${receipt.transactionHash.slice(2,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Confirmed payment receipt downloaded. It records allocations, not withdrawals.');
-});};
+async function openReceipt(hash,format='view'){
+ if(!selected)throw new Error('Open a project before viewing its receipt.');
+ const current=selected,receipt=await client.paymentReceipt(contractAddress,current.id,hash);
+ if(selected!==current)return;
+ if(format!=='json'){$('receipt-body').innerHTML=receiptHTML(receipt,current.plan.title);$('receipt-dialog').showModal();return;}
+ const blob=new Blob([JSON.stringify({...receipt,projectTitle:current.plan.title},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download=`teampay-project-${current.id}-${receipt.transactionHash.slice(2,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Confirmed payment receipt downloaded. It records allocations, not withdrawals.');
+}
+$('payment-history').onclick=event=>{const button=event.target.closest('[data-receipt]');if(button)run(()=>openReceipt(button.dataset.receipt,button.dataset.format));};
 $('receipt-close').onclick=()=>$('receipt-dialog').close();
 $('receipt-print').onclick=()=>window.print();
 $('check-wallet').onclick=()=>run(async()=>{const accounts=await connectionSession().check();if(!accounts.length){message('The wallet has not granted access yet. Approve its open request, or cancel it and choose “I cancelled the request”.');return;}await connect();message('Wallet connected to Arc Mainnet.');});
@@ -242,7 +245,7 @@ try{
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);
  const configResponse=await fetch('./deployment.json',{cache:'no-store'});if(!configResponse.ok)throw new Error('Could not load the shared deployment configuration.');const config=await configResponse.json();if(BigInt(config.chainId)!==BigInt(NETWORK.chainId))throw new Error('Shared deployment network mismatch.');
  const params=new URLSearchParams(location.search);if(params.has('network')&&params.get('network')!=='5042')throw new Error('This link is for another network. Open a mainnet project link.');const raw=params.get('contract')||config.contract||store.get(CONTRACT_KEY);
- if(params.has('project')){if(!raw)throw new Error('This project link is missing its contract address.');await loadProject(raw,params.get('project'));}
+ if(params.has('project')){if(!raw)throw new Error('This project link is missing its contract address.');await loadProject(raw,params.get('project'));if(params.has('receipt'))await openReceipt(params.get('receipt'));}
  else{if(raw){await setContract(raw);message('Ready to create a mainnet agreement.');}else{$('contract-setup').open=setupMode;$('availability').textContent='Shared mainnet setup is pending. You can draft and review an agreement now; publishing becomes available after deployment.';$('publish').disabled=true;message(setupMode?'Builder setup: connect a wallet with USDC, then deploy the shared contract.':'Create and review a draft. Mainnet publishing is awaiting setup.');}}
  await syncWallet();
  if(pending){if(!/^0x[0-9a-fA-F]{64}$/.test(pending.hash))throw new Error('Saved transaction record is invalid.');showPending();await checkPending();}

@@ -6,6 +6,8 @@ TeamPay helps freelance teams agree on upfront costs and revenue shares, publish
 
 **Website:** https://product-ruby-chi.vercel.app
 
+[View a confirmed mainnet payment receipt](https://product-ruby-chi.vercel.app/workspace?network=5042&contract=0xB8A30476424DF1b2954e9a934a66fC52463C62cD&project=1&receipt=0x90e25ec0c7875a18f9feb010e6132a723640dd39469f8c70dca3bbdaf9e1b586) — no wallet connection needed to inspect it.
+
 ## Deployment status
 
 The TeamPay contract is deployed on **Arc Mainnet (5042)** at [`0xB8A30476424DF1b2954e9a934a66fC52463C62cD`](https://explorer.arc.io/address/0xB8A30476424DF1b2954e9a934a66fC52463C62cD). Creation and runtime bytecode match this repository. Source is publicly verified on [Sourcify](https://sourcify.dev/server/v2/contract/5042/0xB8A30476424DF1b2954e9a934a66fC52463C62cD), with exact creation and runtime matches. Arc Explorer also shows verified TeamPay source, confirmed by the builder’s screenshot; see [verification details](verification/README.md).
@@ -78,3 +80,7 @@ Contracts are experimental and unaudited. Tests cover accounting conservation, p
 ## License
 
 Original TeamPay code is MIT licensed. Vendored dependencies retain their own license notices.
+
+## Submission preparation
+
+[Microgrant application draft](submission/arc-microgrants.md) and [walkthrough / remaining manual checks](submission/walkthrough.md). These are preparation materials; no grant application has been submitted.
