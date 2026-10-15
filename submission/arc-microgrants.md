@@ -1,6 +1,6 @@
 # TeamPay — Arc Microgrants submission draft
 
-This is prepared application copy, not a submitted application. Confirm the applicant eligibility declarations in DoraHacks before submitting.
+The builder has reported submitting the application. This file is the maintained application copy; the submitted version may differ. The submission URL has not yet been recorded.
 
 ## Name
 
@@ -55,7 +55,7 @@ The subsequent builder-controlled two-wallet test (project 2) received four paym
 
 ## Technical credibility and limits
 
-The repository includes 46 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
+The repository includes 48 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
 
 Solidity source is verified on Sourcify with exact creation/runtime matches, and Arc Explorer displays verified source. Verification is not an audit. No independent audit or customer traction is claimed. The two-recipient mainnet payment and withdrawal flow is complete. Chrome responsive layout and receipt PDF checks are documented in `verification/browser/`. Real-team feedback and physical-device wallet testing remain outstanding. Mobile wallet pairing is not implemented; an injected browser wallet is required.
 

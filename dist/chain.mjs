@@ -27,13 +27,14 @@ export class TeamPayClient {
   if(!same(state.collaborators,args[2])||!same(state.shares,args[3])||!same(state.expenseRecipients,args[0])||state.remainingExpenses.some((n,i)=>n>args[1][i]))throw new Error('Project descriptions do not match the payment rules.');
   return {contract,plan,state,id:String(id)};
  }
- async paymentHistory(raw,id,{toBlock,window=2000}={}){
+ async paymentHistory(raw,id,{toBlock,window=2000,minBlock=0}={}){
   if(!/^[1-9]\d*$/.test(String(id)))throw new Error('Invalid project number.');
   if(!Number.isInteger(window)||window<1||window>2000)throw new Error('History window must be between 1 and 2000 blocks.');
   const contract=await this.at(raw);
   const end=toBlock??await this.provider.getBlockNumber();
   if(!Number.isSafeInteger(end)||end<0)throw new Error('Invalid history block.');
-  const start=Math.max(0,end-window+1),logs=[];
+  if(!Number.isSafeInteger(minBlock)||minBlock<0||minBlock>end)throw new Error('Invalid history start block.');
+  const start=Math.max(minBlock,end-window+1),logs=[];
   const topics=[[contract.interface.getEvent('Funded').topicHash,contract.interface.getEvent('Allocated').topicHash],zeroPadValue(toBeHex(BigInt(id)),32)];
   for(let from=start;from<=end;from+=500){logs.push(...await this.provider.getLogs({address:await contract.getAddress(),fromBlock:from,toBlock:Math.min(end,from+499),topics}));}
   const payments=new Map(),allocations=new Map();
@@ -42,7 +43,7 @@ export class TeamPayClient {
    else if(event.name==='Allocated'){const list=allocations.get(log.transactionHash)||[];list.push({recipient:event.args.recipient,amount:event.args.amount});allocations.set(log.transactionHash,list);}
   }
   for(const [hash,payment] of payments){payment.allocations=allocations.get(hash)||[];if(payment.allocations.reduce((n,a)=>n+a.amount,0n)!==payment.amount)throw new Error('Payment events are incomplete. Refresh before exporting a receipt.');}
-  return {fromBlock:start,toBlock:end,earlierBlock:start>0?start-1:null,payments:[...payments.values()].sort((a,b)=>b.blockNumber-a.blockNumber||b.logIndex-a.logIndex)};
+  return {fromBlock:start,toBlock:end,earlierBlock:start>minBlock?start-1:null,payments:[...payments.values()].sort((a,b)=>b.blockNumber-a.blockNumber||b.logIndex-a.logIndex)};
  }
  async paymentReceipt(raw,id,hash){
   if(!/^0x[0-9a-fA-F]{64}$/.test(hash))throw new Error('Invalid transaction hash.');

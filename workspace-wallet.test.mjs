@@ -59,7 +59,7 @@ test('intentional disconnect clears wallet state and blocks passive reconnection
 
 test('confirmed payment clears the amount before refreshing; reverted payment preserves it',async()=>{
  for(const status of [1,0]){
-  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'0.0025',hidden:true});return elements.get(id);};
+  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'0.0025',hidden:true,dataset:{}});return elements.get(id);};
   let refreshed=false;
   const context=vm.createContext({$,pending:{kind:'pay',value:'2500000000000000',contract:'0xcontract',projectId:'2'},store:{remove(){}},KEY:'pending',txLink:()=>'/tx/hash',display:()=> '0.0025',updatePayment(){ $('pay').disabled=true;},message(){},loadProject:async()=>{refreshed=true;assert.equal($('pay-amount').value,'');assert.equal($('payment-success').hidden,false);}});
   vm.runInContext(source.slice(source.indexOf('async function recover('),source.indexOf('async function checkPending(')),context);
@@ -67,4 +67,11 @@ test('confirmed payment clears the amount before refreshing; reverted payment pr
   if(status===1){await result;assert.equal(refreshed,true);assert.match($('payment-success').textContent,/0.0025 USDC confirmed/);assert.equal($('pay').disabled,true);}
   else{await assert.rejects(result,/reverted/);assert.equal($('pay-amount').value,'0.0025');assert.equal($('payment-success').hidden,true);assert.equal(refreshed,false);}
  }
+});
+
+test('starting another project clears the previous payment confirmation and amount',()=>{
+ const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'0.0025',hidden:false,textContent:'Payment complete',dataset:{project:'old:2'}});return nodes.get(id);};
+ const context=vm.createContext({$,busy:false,selected:{id:'2'},historyVersion:0,contractAddress:'contract',history:{replaceState(){}},location:{pathname:'/workspace'},message(){}});
+ vm.runInContext(source.slice(source.indexOf("$('new-project').onclick="),source.indexOf("if(window.ethereum?.on)")),context);
+ $('new-project').onclick();assert.equal($('payment-success').hidden,true);assert.equal($('payment-success').textContent,'');assert.equal($('payment-success').dataset.project,undefined);assert.equal($('pay-amount').value,'');assert.equal(context.selected,null);
 });

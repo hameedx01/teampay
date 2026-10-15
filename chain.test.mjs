@@ -10,3 +10,13 @@ test('bad, zero, duplicate, and invalid mixed-case addresses fail before signing
 });
 test('missing expense recipient and invalid shares fail before signing',()=>{const p=sample();p.expenses[0].member=-1;assert.throws(()=>normalizePlan(p));const q=sample();q.members[0].bps=4001;assert.throws(()=>normalizePlan(q));});
 test('a project can have no expenses',()=>{const p=sample();p.expenses=[];assert.deepEqual(createArgs(normalizePlan(p))[0],[]);});
+
+test('payment history stops at deployment and does not query earlier chain blocks',async()=>{
+ const {TeamPayClient}=await import('./dist/chain.mjs');const {Interface}=await import('./dist/vendor/ethers.mjs');const {readFileSync}=await import('node:fs');
+ const artifact=JSON.parse(readFileSync(new URL('./dist/contract.json',import.meta.url)));const ranges=[];
+ const client=new TeamPayClient({getBlockNumber:async()=>1234,getLogs:async range=>{ranges.push(range);return [];}},artifact);
+ client.at=async()=>({getAddress:async()=>a,interface:new Interface(artifact.abi)});
+ const page=await client.paymentHistory(a,'2',{minBlock:1000});assert.equal(page.fromBlock,1000);assert.equal(page.earlierBlock,null);assert.equal(ranges[0].fromBlock,1000);assert.equal(ranges[0].toBlock,1234);
+ const recent=await client.paymentHistory(a,'2',{minBlock:1000,window:100});assert.equal(recent.earlierBlock,1134);
+ await assert.rejects(client.paymentHistory(a,'2',{minBlock:1235}),/Invalid history start/);
+});

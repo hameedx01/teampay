@@ -134,6 +134,7 @@ async function recover(receipt){
   $('pay-amount').value='';updatePayment();
   const paid=operation.value?display(BigInt(operation.value))+' USDC':'Your payment';
   $('payment-success').textContent=paid+' confirmed on Arc Mainnet. This payment is complete. Enter a new amount only if you want to make another payment.';
+  $('payment-success').dataset.project=operation.contract.toLowerCase()+':'+operation.projectId;
   $('payment-success').hidden=false;
  }
  if(operation.kind==='create'){
@@ -178,6 +179,7 @@ async function refreshWithdrawal(){
  const currentWallet=wallet,currentProject=selected;const balance=await currentProject.contract.claimable(currentWallet.account);if(wallet!==currentWallet||selected!==currentProject)return;$('withdrawable').textContent=display(balance)+' USDC';$('withdraw').disabled=balance===0n;
 }
 async function loadProject(raw,id){
+ if($('payment-success').dataset.project!==raw.toLowerCase()+':'+id){$('payment-success').hidden=true;$('payment-success').textContent='';}
  message('Loading the agreement and balances from Arc Mainnet…');
  $('project').hidden=true;selected=null;historyVersion++;historyRows=[];historyCursor=null;$('payment-history').innerHTML='';$('history-scope').textContent='';$('history-earlier').hidden=true;
  const loaded=await client.load(raw,id);selected=loaded;contractAddress=await loaded.contract.getAddress();store.set(CONTRACT_KEY,contractAddress);
@@ -198,7 +200,7 @@ function updatePayment(){
 
 function renderHistory(){
  $('payment-history').innerHTML=historyRows.length?historyRows.map(p=>`<article class="payment-entry"><div><strong>${display(p.amount)} USDC</strong><small>Block ${p.blockNumber.toLocaleString()} · Payer ${p.payer?esc(short(p.payer)):'multiple'}</small><a href="${txLink(p.hash)}" target="_blank" rel="noopener noreferrer">${esc(short(p.hash))} ↗</a></div><div class="receipt-actions"><button class="secondary" data-receipt="${p.hash}">View receipt</button><button class="text-action" data-receipt="${p.hash}" data-format="json" aria-label="Download receipt as JSON">JSON ↓</button></div></article>`).join(''):'<p class="fine">No payments found in these blocks. Load earlier blocks to look further back.</p>';
- $('history-scope').textContent=`Showing ${historyRows.length} payment transaction${historyRows.length===1?'':'s'} from blocks ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()}. ${historyCursor===null?'Searched back to the start of the chain.':'Earlier payments may exist.'}`;
+ $('history-scope').textContent=`Showing ${historyRows.length} payment transaction${historyRows.length===1?'':'s'} from blocks ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()}. ${historyCursor===null?'Reached the start of the available contract history.':'Earlier payments may exist.'}`;
  $('history-earlier').hidden=historyCursor===null;
 }
 async function loadHistory(reset=false){
@@ -206,7 +208,9 @@ async function loadHistory(reset=false){
  const version=historyVersion,current=selected;
  $('history-refresh').disabled=true;$('history-earlier').disabled=true;$('history-scope').textContent='Loading confirmed payment events…';
  try{
-  const page=await client.paymentHistory(await current.contract.getAddress(),current.id,reset?{}:{toBlock:historyCursor});
+  const target=await current.contract.getAddress();
+  const minBlock=sharedConfig?.contract?.toLowerCase()===target.toLowerCase()?sharedConfig.deploymentBlock:0;
+  const page=await client.paymentHistory(target,current.id,{minBlock,...(reset?{}:{toBlock:historyCursor})});
   if(version!==historyVersion||selected!==current)return;
   if(reset){historyRows=[];historyEnd=page.toBlock;}
   historyStart=page.fromBlock;historyCursor=page.earlierBlock;
@@ -287,7 +291,7 @@ $('withdraw').onclick=()=>run(async()=>{if(!wallet)await connect();const balance
 $('refresh').onclick=()=>run(async()=>{await loadProject(contractAddress,selected.id);});
 $('check-pending').onclick=()=>run(checkPending);
 $('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText($('share-link').value);message('Project link copied. It loads the agreement from Arc Mainnet.');}catch{$('share-link').select();message('Select and copy the project link from the field.');}});
-$('new-project').onclick=()=>{if(busy)return;selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
+$('new-project').onclick=()=>{if(busy)return;$('payment-success').hidden=true;$('payment-success').textContent='';delete $('payment-success').dataset.project;$('pay-amount').value='';selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
 if(window.ethereum?.on){
  for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{
   if(disconnected)return;
