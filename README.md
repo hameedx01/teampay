@@ -106,9 +106,7 @@ Refresh the recorded mainnet transaction evidence with a read-only check:
 node verification/reconcile-mainnet.mjs
 ```
 
-## Inspiration and limitations
-
-The expense-first workflow is inspired by [Splits Recoup](https://splits.org/protocol/docs/templates/recoup/). TeamPay implements its own small contract and interface; it is not affiliated with Splits and does not claim to be a port of their contracts or a hackathon winner.
+## Limitations
 
 Contracts are experimental and unaudited. Tests cover accounting conservation, partial payments, withdrawal isolation, metadata verification, history, and wallet changes. Local EVM tests do not replace real Arc wallet testing. Mobile wallet pairing is not implemented; transactions require a supported injected browser wallet. See [security limitations](SECURITY.md).
 
