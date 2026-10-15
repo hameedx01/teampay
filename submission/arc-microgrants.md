@@ -26,6 +26,7 @@ TeamPay uses Arc for immutable payment agreements, native-USDC payment allocatio
 
 - Public landing page and wallet-free interactive example.
 - Mainnet agreement publishing and shareable project links.
+- Wallet project discovery, including unfunded agreements, and local draft restore/discard.
 - Ordered expense repayment, percentage sharing, and partial-payment accounting.
 - Wallet/network checks, fee review, and pending-transaction recovery.
 - Independent withdrawals, wallet disconnect, and wallet-wide on-chain activity history.
@@ -55,7 +56,7 @@ The subsequent builder-controlled two-wallet test (project 2) received four paym
 
 ## Technical credibility and limits
 
-The repository includes 48 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
+The repository includes 54 app tests, 11 Solidity tests (including a 256-case accounting fuzz run), and local EVM integration checks. Coverage includes accounting conservation, partial payments, multiple recipients, isolated project accounting, re-entrant claim attempts, receipt verification, and wallet changes during transaction review.
 
 Solidity source is verified on Sourcify with exact creation/runtime matches, and Arc Explorer displays verified source. Verification is not an audit. No independent audit or customer traction is claimed. The two-recipient mainnet payment and withdrawal flow is complete. Chrome responsive layout and receipt PDF checks are documented in `verification/browser/`. Real-team feedback and physical-device wallet testing remain outstanding. Mobile wallet pairing is not implemented; an injected browser wallet is required.
 

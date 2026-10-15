@@ -1,3 +1,5 @@
+import {initWorkspaceExtras} from './workspace-extras.mjs';
+import {searchPaymentHistory} from './history-search.mjs';
 import {loadWalletActivity,describeWalletActivity,filterWalletActivity} from './activity.mjs';
 import {receiptHTML} from './receipt.mjs';
 import {AccountConnection,NetworkConnection,revokeWalletAccess,walletSnapshot,walletErrorCode,PENDING_MESSAGE} from './wallet-session.mjs';
@@ -12,6 +14,7 @@ const DISCONNECT_KEY='teampay.wallet.disconnected.v1';
 let disconnected=store.get(DISCONNECT_KEY)==='true';
 let activityVersion=0,activityRows=[],activityNext=null,activityEnd=null,activityAccount=null,activityBusy=false,sharedConfig=null;
 let accountConnection=null;
+let extras=null;
 function connectionSession(){if(!window.ethereum?.request)throw new Error('Open this page in a wallet-enabled browser or install an EVM wallet extension.');if(!accountConnection||accountConnection.provider!==window.ethereum)accountConnection=new AccountConnection(window.ethereum);return accountConnection;}
 let networkConnection=null,connecting=false,walletVersion=0,walletState={account:null,wrongNetwork:false};
 function updateConnectButton(){
@@ -35,7 +38,7 @@ async function syncWallet(){
  const state=await walletSnapshot(window.ethereum,NETWORK.chainId);if(version!==walletVersion)return;
  walletState=state;if(previousAccount?.toLowerCase()!==state.account?.toLowerCase())resetActivity();if(state.wrongNetwork)$('network-message').textContent='Your wallet is on another network (chain '+Number(BigInt(state.chainId))+'). Switch to Arc Mainnet before publishing or making a payment.';updateConnectButton();
  if(state.account&&!state.wrongNetwork){const provider=new BrowserProvider(window.ethereum);const signer=await provider.getSigner(state.account);if(version!==walletVersion)return;wallet={provider,signer,account:state.account};}
- if(version!==walletVersion)return;updateConnectButton();if(selected)await refreshWithdrawal();if(!$('activity').hidden)void refreshActivity();
+ if(version!==walletVersion)return;updateConnectButton();if(selected)await refreshWithdrawal();if(!$('activity').hidden)void refreshActivity();if(!$('my-projects').hidden)void extras?.refreshLibrary();
 }
 const KEY='teampay.arc-mainnet.pending.v1',CONTRACT_KEY='teampay.arc-mainnet.contract.v1';
 let client,reader,artifact,wallet=null,busy=false,selected=null,draft=null,contractAddress='',memberCount=0,historyRows=[],historyCursor=null,historyStart=null,historyEnd=null,historyVersion=0;
@@ -74,6 +77,7 @@ function updateExpenseControls(){
  rows.forEach((r,i)=>{r.querySelector('.expense-position').textContent=`REPAY ${i+1===1?'FIRST':i+1===2?'SECOND':`#${i+1}`}`;r.querySelector('[data-move="up"]').disabled=i===0;r.querySelector('[data-move="down"]').disabled=i===rows.length-1;});
 }
 function updateDraft(){
+ extras?.saveDraft();
  const rows=[...$('members').children];
  let total=0,valid=true;const shares=rows.map(row=>{try{const n=basisPoints(row.querySelector('[data-field="share"]').value.trim());total+=n;return n;}catch{valid=false;return 0;}});
  $('share-total').textContent=valid&&total===10000?'100% allocated · Ready':`Shares: ${total/100}% of 100%${total>10000?' · Reduce the total':''}`;
@@ -116,7 +120,7 @@ async function connect(){
    }
    await syncWallet();
   }
-  if(!wallet)throw new Error('Wallet connection changed. Please connect again.');if(!$('activity').hidden)void refreshActivity();return wallet;
+  if(!wallet)throw new Error('Wallet connection changed. Please connect again.');if(!$('activity').hidden)void refreshActivity();if(!$('my-projects').hidden)void extras?.refreshLibrary();return wallet;
  }finally{connecting=false;updateConnectButton();}
 }
 async function setContract(raw){const checked=await client.at(raw);contractAddress=await checked.getAddress();$('contract-address').value=contractAddress;store.set(CONTRACT_KEY,contractAddress);$('contract-state').textContent='Supported TeamPay contract: '+contractAddress;$('contract-setup').open=false;$('availability').textContent='Mainnet payments are configured. Review your agreement before publishing.';$('publish').disabled=walletState.wrongNetwork;return contractAddress;}
@@ -141,12 +145,13 @@ async function recover(receipt){
   const iface=new Interface(artifact.abi);let projectId;
   for(const log of receipt.logs){try{const event=iface.parseLog(log);if(event?.name==='ProjectPublished')projectId=event.args.projectId.toString();}catch{}}
   if(!projectId)throw new Error('Transaction confirmed, but its project event was not found. Keep the transaction receipt.');
-  await loadProject(operation.contract,projectId);$('review').close();
+  extras?.clearPublishedDraft(operation.draftSnapshot);await loadProject(operation.contract,projectId);$('review').close();
  }else if(operation.projectId)await loadProject(operation.contract,operation.projectId);
  message(operation.kind==='pay'?$('payment-success').textContent:'Transaction confirmed. Balances are loaded from Arc Mainnet.');
 }
 async function checkPending(){if(!pending)return;const receipt=await reader.getTransactionReceipt(pending.hash);if(receipt)await recover(receipt);else{showPending();message('The transaction is still pending or not yet visible to this RPC. Check the explorer before taking further action.');}}
 async function sendReviewed(kind,tx){
+ const draftSnapshot=kind==='create'?extras?.draftSnapshot():null;
  if(pending){showPending();throw new Error('Check the pending transaction before submitting another one.');}
  if(!wallet)await connect();
  const reviewedWallet=wallet,reviewVersion=walletVersion,account=reviewedWallet.account;
@@ -170,7 +175,7 @@ async function sendReviewed(kind,tx){
  assertReviewCurrent();
  message('Approve the transaction in your wallet.');
  const response=await reviewedWallet.signer.sendTransaction(transaction);
- pending={hash:response.hash,kind,value:value.toString(),contract:contractAddress,projectId:selected?.id??null};store.set(KEY,JSON.stringify(pending));showPending();message('Transaction submitted. Waiting for confirmation…');
+ pending={hash:response.hash,kind,value:value.toString(),draftSnapshot,contract:contractAddress,projectId:selected?.id??null};store.set(KEY,JSON.stringify(pending));showPending();message('Transaction submitted. Waiting for confirmation…');
  try{const receipt=await reader.waitForTransaction(response.hash,1,120000);if(receipt)await recover(receipt);}catch(error){if(pending)throw new Error('Confirmation is taking longer than expected. Your transaction may still complete. Use “Check pending transaction” or the explorer.');throw error;}
 }
 async function refreshWithdrawal(){
@@ -210,13 +215,14 @@ async function loadHistory(reset=false){
  try{
   const target=await current.contract.getAddress();
   const minBlock=sharedConfig?.contract?.toLowerCase()===target.toLowerCase()?sharedConfig.deploymentBlock:0;
-  const page=await client.paymentHistory(target,current.id,{minBlock,...(reset?{}:{toBlock:historyCursor})});
+  const page=await searchPaymentHistory(client,target,current.id,{minBlock,...(reset?{}:{toBlock:historyCursor}),hasPayments:current.state.received>0n,isCurrent:()=>version===historyVersion&&selected===current,onProgress:range=>{$('history-scope').textContent='Searching payments in blocks '+range.fromBlock.toLocaleString()+'–'+range.toBlock.toLocaleString()+'…';}});
+  if(!page)return;
   if(version!==historyVersion||selected!==current)return;
   if(reset){historyRows=[];historyEnd=page.toBlock;}
   historyStart=page.fromBlock;historyCursor=page.earlierBlock;
   historyRows=[...new Map([...historyRows,...page.payments].map(p=>[p.hash,p])).values()];renderHistory();
  }catch(error){if(version===historyVersion)$('history-scope').textContent='Payment history could not be loaded. '+explain(error)+' Use Refresh history to retry.';}
- finally{$('history-refresh').disabled=false;$('history-earlier').disabled=false;}
+ finally{if(version===historyVersion){$('history-refresh').disabled=false;$('history-earlier').disabled=false;}}
 }
 $('history-refresh').onclick=()=>run(()=>loadHistory(true));
 $('history-earlier').onclick=()=>run(()=>loadHistory(false));
@@ -232,6 +238,7 @@ $('payment-history').onclick=event=>{const button=event.target.closest('[data-re
 $('receipt-close').onclick=()=>$('receipt-dialog').close();
 $('receipt-print').onclick=()=>window.print();
 function resetActivity(){
+ extras?.resetLibrary();
  activityVersion++;activityRows=[];activityNext=null;activityEnd=null;activityAccount=null;activityBusy=false;
  $('activity-list').innerHTML='';$('activity-filter').value='all';$('activity-status').textContent='Connect your wallet to load your activity.';$('activity-more').hidden=true;$('activity-refresh').disabled=false;
 }
@@ -291,7 +298,7 @@ $('withdraw').onclick=()=>run(async()=>{if(!wallet)await connect();const balance
 $('refresh').onclick=()=>run(async()=>{await loadProject(contractAddress,selected.id);});
 $('check-pending').onclick=()=>run(checkPending);
 $('copy-link').onclick=()=>run(async()=>{try{await navigator.clipboard.writeText($('share-link').value);message('Project link copied. It loads the agreement from Arc Mainnet.');}catch{$('share-link').select();message('Select and copy the project link from the field.');}});
-$('new-project').onclick=()=>{if(busy)return;$('payment-success').hidden=true;$('payment-success').textContent='';delete $('payment-success').dataset.project;$('pay-amount').value='';selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);message('Create another project using the same contract.');};
+$('new-project').onclick=()=>{if(busy)return;$('payment-success').hidden=true;$('payment-success').textContent='';delete $('payment-success').dataset.project;$('pay-amount').value='';selected=null;historyVersion++;$('project').hidden=true;$('setup').hidden=false;$('contract-address').value=contractAddress;history.replaceState(null,'',location.pathname);extras?.newProject();message('Create another project using the same contract.');};
 if(window.ethereum?.on){
  for(const event of ['accountsChanged','chainChanged'])window.ethereum.on(event,()=>{
   if(disconnected)return;
@@ -315,6 +322,7 @@ if(new URLSearchParams(location.search).get('acceptance')==='two-wallet'){
  }catch(error){message('Test draft could not be loaded: '+explain(error),true);}
 }
 
+extras=initWorkspaceExtras({$,esc,getContext:()=>({account:walletState.account,disconnected,busy,reader,client,artifact,config:sharedConfig}),appendMember,appendExpense,updateRecipients,updateExpenseControls,updateDraft});
 try{
  const response=await fetch('./contract.json');if(!response.ok)throw new Error('Could not load the contract definition.');artifact=await response.json();
  reader=new JsonRpcProvider(NETWORK.rpcUrls[0]);if((await reader.getNetwork()).chainId!==BigInt(NETWORK.chainId))throw new Error('RPC network mismatch.');client=new TeamPayClient(reader,artifact);

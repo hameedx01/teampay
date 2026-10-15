@@ -11,9 +11,9 @@ Validation: 48 application tests pass; 11 Solidity tests pass, including 256 acc
 
 ## Next priorities
 
-1. Make old payments easier to find. The recent-block history window can initially be empty even for a funded project; it currently explains the scope and offers earlier pages. A verified event index or persisted checkpoints would remove repeated scanning.
-2. Add a “My projects” view derived from verified publication and allocation events, including projects where the connected wallet is a recipient.
-3. Save unpublished drafts locally and offer explicit restore/discard controls; never auto-publish a restored draft.
+1. Shipped bounded automatic history search; continue improving access to old payments. The recent-block history window can initially be empty even for a funded project; it currently explains the scope and offers earlier pages. A verified event index or persisted checkpoints would remove repeated scanning.
+2. Shipped “My projects” using verified publication events and contract membership, including unfunded agreements.
+3. Shipped local drafts with explicit restore/discard controls and no automatic publication.
 4. Test actual mobile wallet browsers and account/network changes with a willing tester. Responsive desktop emulation is already covered.
 5. Ask three freelance teams to try the example and explain how repayment works. Use their feedback before adding approval workflows or invoicing.
 

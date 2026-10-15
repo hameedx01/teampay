@@ -9,7 +9,7 @@ function fixture(){
  const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  let accounts=['0x1234567890'],chain='0x1';
  const provider={request:async({method})=>method==='eth_accounts'?accounts:chain};
- const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK,short:s=>s,accountConnection:null,wallet:null,selected:null,busy:false,disconnected:false,resetActivity(){},refreshActivity:async()=>{},contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
+ const context=vm.createContext({$,walletSnapshot,window:{ethereum:provider},NETWORK,short:s=>s,accountConnection:null,extras:null,wallet:null,selected:null,busy:false,disconnected:false,resetActivity(){},refreshActivity:async()=>{},contractAddress:'0xcontract',refreshWithdrawal:async()=>{},updatePayment:()=>{},BrowserProvider:class{async getSigner(){return {};}}});
  vm.runInContext(source.slice(source.indexOf('let networkConnection='),source.indexOf('const KEY=')),context);
  return {$,context,sync:()=>vm.runInContext('syncWallet()',context),chain:v=>chain=v,accounts:v=>accounts=v};
 }
@@ -27,7 +27,7 @@ function reviewFixture(changeAt){
  const invalidate=()=>vm.runInContext('walletVersion++;',context);
  const $=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',close(){},showModal(){opened++;if(changeAt==='review')invalidate();queueMicrotask(()=>elements.get('confirm-send').onclick());}});return elements.get(id);};
  const signer={sendTransaction:async()=>{sent++;return {hash:'0xhash'};}};
- context=vm.createContext({$,queueMicrotask,pending:null,wallet:{account:'0xabc',signer},walletVersion:1,selected:null,contractAddress:'0xcontract',NETWORK,
+ context=vm.createContext({$,queueMicrotask,pending:null,extras:null,wallet:{account:'0xabc',signer},walletVersion:1,selected:null,contractAddress:'0xcontract',NETWORK,
   reader:{estimateGas:async()=>{if(changeAt==='estimate')invalidate();return 100n;},getFeeData:async()=>({gasPrice:1n}),getBalance:async()=>1000n,waitForTransaction:async()=>null},
   window:{ethereum:{request:async({method})=>{if(changeAt==='verification'&&method==='eth_chainId')invalidate();return method==='eth_accounts'?['0xabc']:NETWORK.chainId;}}},
   display:String,esc:String,message(){},store:{set(){}},KEY:'test',showPending(){},recover(){}});
@@ -61,7 +61,7 @@ test('confirmed payment clears the amount before refreshing; reverted payment pr
  for(const status of [1,0]){
   const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'0.0025',hidden:true,dataset:{}});return elements.get(id);};
   let refreshed=false;
-  const context=vm.createContext({$,pending:{kind:'pay',value:'2500000000000000',contract:'0xcontract',projectId:'2'},store:{remove(){}},KEY:'pending',txLink:()=>'/tx/hash',display:()=> '0.0025',updatePayment(){ $('pay').disabled=true;},message(){},loadProject:async()=>{refreshed=true;assert.equal($('pay-amount').value,'');assert.equal($('payment-success').hidden,false);}});
+  const context=vm.createContext({$,extras:null,pending:{kind:'pay',value:'2500000000000000',contract:'0xcontract',projectId:'2'},store:{remove(){}},KEY:'pending',txLink:()=>'/tx/hash',display:()=> '0.0025',updatePayment(){ $('pay').disabled=true;},message(){},loadProject:async()=>{refreshed=true;assert.equal($('pay-amount').value,'');assert.equal($('payment-success').hidden,false);}});
   vm.runInContext(source.slice(source.indexOf('async function recover('),source.indexOf('async function checkPending(')),context);
   const result=vm.runInContext(`recover({status:${status},hash:'hash'})`,context);
   if(status===1){await result;assert.equal(refreshed,true);assert.match($('payment-success').textContent,/0.0025 USDC confirmed/);assert.equal($('pay').disabled,true);}
@@ -71,7 +71,7 @@ test('confirmed payment clears the amount before refreshing; reverted payment pr
 
 test('starting another project clears the previous payment confirmation and amount',()=>{
  const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'0.0025',hidden:false,textContent:'Payment complete',dataset:{project:'old:2'}});return nodes.get(id);};
- const context=vm.createContext({$,busy:false,selected:{id:'2'},historyVersion:0,contractAddress:'contract',history:{replaceState(){}},location:{pathname:'/workspace'},message(){}});
+ const context=vm.createContext({$,extras:null,busy:false,selected:{id:'2'},historyVersion:0,contractAddress:'contract',history:{replaceState(){}},location:{pathname:'/workspace'},message(){}});
  vm.runInContext(source.slice(source.indexOf("$('new-project').onclick="),source.indexOf("if(window.ethereum?.on)")),context);
  $('new-project').onclick();assert.equal($('payment-success').hidden,true);assert.equal($('payment-success').textContent,'');assert.equal($('payment-success').dataset.project,undefined);assert.equal($('pay-amount').value,'');assert.equal(context.selected,null);
 });
